@@ -1,0 +1,16 @@
+{
+  "name": "@vezygg/my-first-package",
+  "version": "1.69.0",
+  "description": "Short description. Usage examples.",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@vezygg/my-first-package": "^1.69.0"
+  }
+}
