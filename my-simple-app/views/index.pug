@@ -1,0 +1,14 @@
+extends layout
+
+block content
+  h1= title
+  p Welcome to #{title}
+  
+  // New Clickable Button
+  button#myClickButton Click Me!
+  
+  // Element to update on click
+  p#messageDisplay The button has not been clicked yet.
+
+  // Link the client-side script
+  script(src='/javascripts/script.js')
