@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "items": [
+      {
+        "productId": 1,
+        "name": "Premium Laptop",
+        "price": 999.99,
+        "quantity": 1
+      }
+    ],
+    "total": 999.99,
+    "status": "pending",
+    "date": "2025-11-12T18:41:30.412Z"
+  },
+  {
+    "id": 2,
+    "items": [
+      {
+        "productId": 2,
+        "name": "Wireless Mouse",
+        "price": 29.99,
+        "quantity": 2
+      }
+    ],
+    "total": 59.98,
+    "status": "pending",
+    "date": "2025-11-12T19:55:36.259Z"
+  }
+]
