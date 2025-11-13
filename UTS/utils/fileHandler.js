@@ -9,26 +9,7 @@ async function initializeDataFiles() {
     
     const files = {
       'users.json': [],
-      'products.json': [
-        {
-          id: 1,
-          name: 'Premium Laptop',
-          price: 999.99,
-          stock: 10,
-          description: 'High-performance laptop with cutting-edge specs',
-          category: 'Electronics',
-          imageUrl: 'https://source.unsplash.com/800x600/?laptop'
-        },
-        {
-          id: 2,
-          name: 'Wireless Mouse',
-          price: 29.99,
-          stock: 50,
-          description: 'Ergonomic wireless mouse with precision tracking',
-          category: 'Accessories',
-          imageUrl: 'https:
-        }
-      ],
+      'products.json': [],
       'orders.json': [],
       'cart.json': []
     };
