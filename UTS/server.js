@@ -1,17 +1,36 @@
 const express = require('express');
+const session = require('express-session');
 const publicRoutes = require('./routes/publicRoutes');
 const apiRoutes = require('./routes/apiRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { initializeDataFiles } = require('./utils/fileHandler');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Session middleware for authentication
+app.use(session({
+  secret: 'techstore-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Make user available in all routes
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
+});
+
 // Routes
 app.use('/', publicRoutes);
+app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 
 // Start server
@@ -19,31 +38,16 @@ initializeDataFiles().then(() => {
   app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║                   TECHSTORE SERVER                         ║
+║               TECHSTORE E-COMMERCE SERVER                  ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Server: http://localhost:${PORT}                             ║
 ║                                                            ║
-║  PUBLIC ROUTES (HTML):                                     ║
-║  GET  /              → Home page                           ║
-║  GET  /products      → Products listing                    ║
-║  GET  /product/:id   → Single product                      ║
-║  GET  /cart          → Shopping cart                       ║
-║  GET  /orders        → Order history                       ║
-║                                                            ║
-║  API ROUTES (JSON):                                        ║
-║  GET    /api/products      → All products                  ║
-║  GET    /api/product/:id   → Single product                ║
-║  POST   /api/products      → Create product                ║
-║  GET    /api/users         → All users                     ║
-║  POST   /api/users         → Create user                   ║
-║  GET    /api/cart          → Get cart                      ║
-║  POST   /api/cart          → Add to cart                   ║
-║  PATCH  /api/cart          → Update cart quantity          ║
-║  DELETE /api/cart/:id      → Remove from cart              ║
-║  GET    /api/orders        → All orders                    ║
-║  POST   /api/orders        → Create order (checkout)       ║
+║  ✓ Authentication System                                   ║
+║  ✓ User Registration & Login                               ║
+║  ✓ Protected Cart & Checkout                               ║
+║  ✓ Order History                                           ║
+║  ✓ User Profiles                                           ║
 ╚════════════════════════════════════════════════════════════╝
     `);
   });
 });
-

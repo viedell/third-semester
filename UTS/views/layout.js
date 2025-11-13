@@ -16,6 +16,7 @@ const commonStyles = `
       --accent-glow: rgba(255, 45, 85, 0.2);
       --accent-hover: #ff1744;
       --success: #10b981;
+      --warning: #f59e0b;
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
@@ -36,9 +37,10 @@ const commonStyles = `
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Futuristic Grid Background */
     .bg-pattern {
       position: fixed;
       inset: 0;
@@ -51,7 +53,6 @@ const commonStyles = `
       opacity: 0.5;
     }
 
-    /* Animated Gradient Orb */
     .bg-pattern::before {
       content: '';
       position: absolute;
@@ -73,7 +74,6 @@ const commonStyles = `
       to { transform: rotate(360deg); }
     }
 
-    /* Navigation */
     nav {
       position: sticky;
       top: 0;
@@ -160,15 +160,63 @@ const commonStyles = `
       width: 100%;
     }
 
+    .user-menu {
+      position: relative;
+    }
+
+    .user-menu-btn {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+
+    .user-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      right: 0;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem;
+      min-width: 200px;
+      display: none;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .user-menu:hover .user-menu-dropdown {
+      display: block;
+    }
+
+    .user-menu-dropdown a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .user-menu-dropdown a:hover {
+      background: var(--surface);
+      color: var(--text-primary);
+    }
+
     .container {
       max-width: 1400px;
       margin: 0 auto;
       padding: 3rem 2rem;
       position: relative;
       z-index: 1;
+      flex: 1;
     }
 
-    /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -211,114 +259,80 @@ const commonStyles = `
       box-shadow: var(--shadow-md);
     }
 
-    /* Product Grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-top: 3rem;
-    }
-
-    .card {
+    /* Footer */
+    footer {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
       position: relative;
+      z-index: 1;
     }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      padding: 1px;
-      background: linear-gradient(135deg, var(--accent-glow), transparent);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.4s ease;
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 3rem 2rem 2rem;
     }
 
-    .card:hover {
-      transform: translateY(-8px);
-      border-color: var(--border-hover);
-      box-shadow: var(--shadow-lg), var(--shadow-glow);
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 3rem;
+      margin-bottom: 3rem;
     }
 
-    .card:hover::before {
-      opacity: 1;
+    .footer-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
     }
 
-    .card-image {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      background: var(--surface-elevated);
-      transition: transform 0.4s ease;
+    .footer-section ul {
+      list-style: none;
     }
 
-    .card:hover .card-image {
-      transform: scale(1.05);
-    }
-
-    .card-content {
-      padding: 1.75rem;
-    }
-
-    .card-category {
-      color: var(--accent);
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
+    .footer-section ul li {
       margin-bottom: 0.75rem;
     }
 
-    .card-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.5px;
-      line-height: 1.3;
-    }
-
-    .card-desc {
+    .footer-section a {
       color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
+      text-decoration: none;
+      transition: color 0.2s;
+      font-size: 0.95rem;
     }
 
-    .card-footer {
+    .footer-section a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
       gap: 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
     }
 
-    .price {
-      font-size: 1.75rem;
-      font-weight: 800;
+    .footer-bottom-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-bottom-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-bottom-links a:hover {
       color: var(--accent);
-      letter-spacing: -1px;
     }
 
-    .stock-badge {
-      display: inline-block;
-      padding: 0.35rem 0.75rem;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      border-radius: 6px;
-      color: var(--success);
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    /* Toast Notifications */
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -357,71 +371,6 @@ const commonStyles = `
       font-size: 0.85rem;
     }
 
-    /* Hero Section */
-    .hero {
-      text-align: center;
-      padding: 4rem 0 3rem;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 4rem;
-      font-weight: 800;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -2px;
-      line-height: 1.1;
-    }
-
-    .hero p {
-      color: var(--text-secondary);
-      font-size: 1.25rem;
-      line-height: 1.7;
-      font-weight: 400;
-    }
-
-    /* Section Headers */
-    .section-header {
-      margin-bottom: 2rem;
-    }
-
-    .section-header h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: -1px;
-      margin-bottom: 0.5rem;
-    }
-
-    .section-header p {
-      color: var(--text-secondary);
-      font-size: 1.1rem;
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 6rem 2rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
-
-    .empty-state h2 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      letter-spacing: -1px;
-    }
-
-    .empty-state p {
-      color: var(--text-secondary);
-      font-size: 1.1rem;
-      margin-bottom: 2rem;
-    }
-
-    /* Responsive */
     @media (max-width: 768px) {
       .nav-container {
         flex-direction: column;
@@ -431,18 +380,17 @@ const commonStyles = `
       
       .nav-links {
         gap: 1.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
       }
       
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      
-      h1 {
-        font-size: 2.5rem;
-      }
-
       .container {
         padding: 2rem 1rem;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
       }
     }
   </style>
@@ -470,6 +418,14 @@ const commonScripts = `
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId, quantity })
         });
+        
+        if (res.status === 401) {
+          showToast('Please login to add items to cart');
+          setTimeout(() => {
+            window.location.href = '/auth/login?redirect=' + encodeURIComponent(window.location.pathname);
+          }, 1500);
+          return;
+        }
         
         if (res.ok) {
           showToast('✓ Added to cart!');
@@ -502,7 +458,7 @@ const commonScripts = `
   </script>
 `;
 
-function createLayout(title, content) {
+function createLayout(title, content, user = null) {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -521,8 +477,23 @@ function createLayout(title, content) {
           <div class="nav-links">
             <a href="/">Home</a>
             <a href="/products">Products</a>
-            <a href="/cart">Cart <span id="cart-badge" style="background:var(--accent);padding:2px 8px;border-radius:12px;font-size:0.8rem;margin-left:4px;"></span></a>
-            <a href="/orders">Orders</a>
+            ${user ? `
+              <a href="/cart">Cart <span id="cart-badge" style="background:var(--accent);padding:2px 8px;border-radius:12px;font-size:0.8rem;margin-left:4px;"></span></a>
+              <a href="/orders">Orders</a>
+              <div class="user-menu">
+                <div class="user-menu-btn">
+                  ${user.name} ▾
+                </div>
+                <div class="user-menu-dropdown">
+                  <a href="/profile">Profile</a>
+                  <a href="/orders">My Orders</a>
+                  <a href="/auth/logout">Logout</a>
+                </div>
+              </div>
+            ` : `
+              <a href="/auth/login">Login</a>
+              <a href="/auth/register" class="btn" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Sign Up</a>
+            `}
           </div>
         </div>
       </nav>
@@ -530,6 +501,61 @@ function createLayout(title, content) {
       <div class="container">
         ${content}
       </div>
+
+      <footer>
+        <div class="footer-content">
+          <div class="footer-grid">
+            <div class="footer-section">
+              <h3>Shop</h3>
+              <ul>
+                <li><a href="/products">All Products</a></li>
+                <li><a href="/products?category=Electronics">Electronics</a></li>
+                <li><a href="/products?category=Accessories">Accessories</a></li>
+                <li><a href="/products?category=Audio">Audio</a></li>
+              </ul>
+            </div>
+            
+            <div class="footer-section">
+              <h3>Support</h3>
+              <ul>
+                <li><a href="/help">Help Center</a></li>
+                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/shipping">Shipping Info</a></li>
+                <li><a href="/returns">Returns & Refunds</a></li>
+              </ul>
+            </div>
+            
+            <div class="footer-section">
+              <h3>Company</h3>
+              <ul>
+                <li><a href="/about">About Us</a></li>
+                <li><a href="/careers">Careers</a></li>
+                <li><a href="/press">Press</a></li>
+                <li><a href="/sustainability">Sustainability</a></li>
+              </ul>
+            </div>
+            
+            <div class="footer-section">
+              <h3>Legal</h3>
+              <ul>
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+                <li><a href="/dmca">DMCA Policy</a></li>
+                <li><a href="/cookies">Cookie Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="footer-bottom">
+            <div>© ${new Date().getFullYear()} TechStore. All rights reserved.</div>
+            <div class="footer-bottom-links">
+              <a href="/sitemap">Sitemap</a>
+              <a href="/accessibility">Accessibility</a>
+              <a href="/licenses">Licenses</a>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       ${commonScripts}
     </body>
