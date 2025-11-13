@@ -1,6 +1,17 @@
 const { createLayout } = require('./layout');
 
 function productView({ product, user }) {
+  if (!product) {
+    return createLayout('Product Not Found', `
+      <div style="text-align: center; padding: 4rem 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem;">Product Not Found</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">The product you're looking for doesn't exist.</p>
+        <a href="/products" class="btn">Browse Products</a>
+      </div>
+    `, user);
+  }
+
   const content = `
     <div style="max-width: 1200px; margin: 0 auto;">
       <a href="/products" style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); text-decoration: none; margin-bottom: 2rem; padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 6px;">
@@ -10,31 +21,31 @@ function productView({ product, user }) {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-bottom: 4rem;">
         <div>
           <img 
-            src="${product.imageUrl}" 
-            alt="${product.name}" 
+            src="${product.imageUrl || 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=500&h=400&fit=crop'}" 
+            alt="${product.name || 'Product'}" 
             style="width: 100%; height: 400px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border);"
           >
         </div>
         
         <div>
           <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.2;">
-            ${product.name}
+            ${product.name || 'Unnamed Product'}
           </h1>
           
           <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="color: gold; font-size: 1.25rem;">⭐</span>
-              <span style="font-weight: 600; font-size: 1.1rem;">${product.rating}</span>
-              <span style="color: var(--text-secondary);">(${product.reviews} reviews)</span>
+              <span style="font-weight: 600; font-size: 1.1rem;">${product.rating || '4.5'}</span>
+              <span style="color: var(--text-secondary);">(${product.reviews || '0'} reviews)</span>
             </div>
             <span style="color: var(--text-muted);">•</span>
             <span style="color: var(--success); font-weight: 600;">
-              ${product.stock > 10 ? 'In Stock' : product.stock > 0 ? `Only ${product.stock} left!` : 'Out of Stock'}
+              ${(product.stock || 0) > 10 ? 'In Stock' : (product.stock || 0) > 0 ? `Only ${product.stock} left!` : 'Out of Stock'}
             </span>
           </div>
           
           <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
-            ${product.description}
+            ${product.description || 'No description available for this product.'}
           </p>
           
           <div style="margin-bottom: 2rem;">
@@ -42,7 +53,7 @@ function productView({ product, user }) {
               Key Features:
             </h3>
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-              ${product.features.map(feature => `
+              ${(product.features || ['High Quality', 'Reliable Performance', 'Modern Design']).map(feature => `
                 <span style="
                   display: inline-block;
                   background: var(--accent-glow);
@@ -63,7 +74,7 @@ function productView({ product, user }) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
               <div>
                 <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">
-                  $${product.price}
+                  $${product.price || '0.00'}
                 </div>
                 <div style="color: var(--text-secondary); font-size: 0.9rem;">
                   Free shipping • 30-day returns
@@ -72,11 +83,11 @@ function productView({ product, user }) {
               
               <div style="text-align: right;">
                 <div style="font-size: 0.9rem; color: var(--text-secondary);">Category</div>
-                <div style="font-weight: 600; color: var(--text-primary);">${product.category}</div>
+                <div style="font-weight: 600; color: var(--text-primary);">${product.category || 'Uncategorized'}</div>
               </div>
             </div>
             
-            ${product.stock > 0 ? `
+            ${(product.stock || 0) > 0 ? `
               <div style="display: flex; gap: 1rem;">
                 <button 
                   onclick="addToCart(${product.id})" 
@@ -121,13 +132,13 @@ function productView({ product, user }) {
           <div>
             <h3 style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Availability</h3>
             <p style="color: var(--text-primary); font-weight: 500;">
-              ${product.stock} units in stock
+              ${product.stock || 0} units in stock
             </p>
           </div>
           
           <div>
             <h3 style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Category</h3>
-            <p style="color: var(--text-primary); font-weight: 500;">${product.category}</p>
+            <p style="color: var(--text-primary); font-weight: 500;">${product.category || 'Uncategorized'}</p>
           </div>
           
           <div>
@@ -177,7 +188,7 @@ function productView({ product, user }) {
     </script>
   `;
   
-  return createLayout(product.name, content, user);
+  return createLayout(product.name || 'Product', content, user);
 }
 
 module.exports = productView;

@@ -1,6 +1,8 @@
 const { createLayout } = require('./layout');
 
 function homeView({ featuredProducts, user }) {
+  const safeProducts = featuredProducts || [];
+  
   const content = `
     <div style="text-align: center; margin-bottom: 4rem;">
       <h1 style="font-size: 3.5rem; font-weight: 900; margin-bottom: 1rem; background: linear-gradient(45deg, var(--accent), #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
@@ -14,25 +16,31 @@ function homeView({ featuredProducts, user }) {
       </a>
     </div>
     
-    <div style="margin-bottom: 4rem;">
-      <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem; text-align: center;">Featured Products</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-        ${featuredProducts.map(product => `
-          <div class="card" style="text-align: center;">
-            <img src="${product.imageUrl}" alt="${product.name}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
-            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${product.name}</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">${product.description}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">$${product.price}</span>
-              <span style="color: var(--text-muted);">⭐ ${product.rating} (${product.reviews})</span>
+    ${safeProducts.length > 0 ? `
+      <div style="margin-bottom: 4rem;">
+        <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 2rem; text-align: center;">Featured Products</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+          ${safeProducts.map(product => `
+            <div class="card" style="text-align: center;">
+              <img src="${product.imageUrl || 'https://images.unsplash.com/photo-1556656793-08538906a9f8?w=500&h=400&fit=crop'}" alt="${product.name || 'Product'}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${product.name || 'Unnamed Product'}</h3>
+              <p style="color: var(--text-secondary); margin-bottom: 1rem;">${product.description || 'No description available'}</p>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">$${product.price || '0.00'}</span>
+                <span style="color: var(--text-muted);">⭐ ${product.rating || '4.5'} (${product.reviews || '0'})</span>
+              </div>
+              <button onclick="addToCart(${product.id})" class="btn" style="width: 100%;" ${(product.stock || 0) <= 0 ? 'disabled' : ''}>
+                ${(product.stock || 0) <= 0 ? 'Out of Stock' : 'Add to Cart'}
+              </button>
             </div>
-            <button onclick="addToCart(${product.id})" class="btn" style="width: 100%;">
-              Add to Cart
-            </button>
-          </div>
-        `).join('')}
+          `).join('')}
+        </div>
       </div>
-    </div>
+    ` : `
+      <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        <p>No featured products available at the moment.</p>
+      </div>
+    `}
     
     <div style="background: var(--surface); border-radius: 12px; padding: 3rem; text-align: center;">
       <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem;">Why Choose TechStore?</h2>

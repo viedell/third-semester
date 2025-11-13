@@ -93,6 +93,7 @@ async function initializeDataFiles() {
   
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
+    console.log('✓ Data directory created');
     
     const files = {
       'users.json': [],
@@ -116,6 +117,9 @@ async function initializeDataFiles() {
   } catch (error) {
     console.log('✓ Using in-memory storage');
     memoryStore.products = defaultProducts;
+    memoryStore.users = [];
+    memoryStore.orders = [];
+    memoryStore.carts = {};
   }
   
   isInitialized = true;
@@ -124,8 +128,11 @@ async function initializeDataFiles() {
 async function readJSON(filename) {
   try {
     const data = await fs.readFile(path.join(DATA_DIR, filename), 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    console.log(`✓ Loaded ${filename}:`, Array.isArray(parsed) ? `${parsed.length} items` : 'Object');
+    return parsed;
   } catch (error) {
+    console.log(`✓ Using memory store for ${filename}`);
     const key = filename.replace('.json', '');
     return memoryStore[key] || (key === 'carts' ? {} : []);
   }
@@ -134,7 +141,9 @@ async function readJSON(filename) {
 async function writeJSON(filename, data) {
   try {
     await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
+    console.log(`✓ Saved ${filename}`);
   } catch (error) {
+    console.log(`✓ Saved to memory store for ${filename}`);
     const key = filename.replace('.json', '');
     memoryStore[key] = data;
   }
