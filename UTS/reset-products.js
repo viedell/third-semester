@@ -1,18 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-
-// In-memory storage for serverless environments
-let memoryStore = {
-  users: [],
-  products: [],
-  orders: [],
-  carts: {}
-};
-
-let isInitialized = false;
-
 const defaultProducts = [
   {
     id: 1,
@@ -196,69 +184,30 @@ const defaultProducts = [
   }
 ];
 
-async function initializeDataFiles() {
-  if (isInitialized) return;
+async function resetProducts() {
+  const dataDir = path.join(__dirname, 'data');
   
   try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    console.log('✓ Data directory created');
+    await fs.mkdir(dataDir, { recursive: true });
     
-    const files = {
-      'users.json': [],
-      'products.json': defaultProducts,
-      'orders.json': [],
-      'carts.json': {}
-    };
-
-    for (const [filename, defaultData] of Object.entries(files)) {
-      const filepath = path.join(DATA_DIR, filename);
-      try {
-        await fs.access(filepath);
-        console.log(`✓ ${filename} exists`);
-      } catch {
-        await fs.writeFile(filepath, JSON.stringify(defaultData, null, 2));
-        console.log(`✓ Created ${filename} with ${defaultData.length} products`);
-      }
-    }
+    await fs.writeFile(
+      path.join(dataDir, 'products.json'), 
+      JSON.stringify(defaultProducts, null, 2)
+    );
     
-    console.log('✓ Using file-based storage');
+    console.log('✅ Reset products successfully!');
+    console.log(`📦 Total products: ${defaultProducts.length}`);
+    console.log('🏷️ Categories:');
+    
+    const categories = [...new Set(defaultProducts.map(p => p.category))];
+    categories.forEach(cat => {
+      const count = defaultProducts.filter(p => p.category === cat).length;
+      console.log(`   ${cat}: ${count} products`);
+    });
+    
   } catch (error) {
-    console.log('✓ Using in-memory storage');
-    memoryStore.products = defaultProducts;
-    memoryStore.users = [];
-    memoryStore.orders = [];
-    memoryStore.carts = {};
-  }
-  
-  isInitialized = true;
-}
-
-async function readJSON(filename) {
-  try {
-    const data = await fs.readFile(path.join(DATA_DIR, filename), 'utf-8');
-    const parsed = JSON.parse(data);
-    console.log(`✓ Loaded ${filename}:`, Array.isArray(parsed) ? `${parsed.length} items` : 'Object');
-    return parsed;
-  } catch (error) {
-    console.log(`✓ Using memory store for ${filename}`);
-    const key = filename.replace('.json', '');
-    return memoryStore[key] || (key === 'carts' ? {} : []);
+    console.error('❌ Failed to reset products:', error);
   }
 }
 
-async function writeJSON(filename, data) {
-  try {
-    await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
-    console.log(`✓ Saved ${filename}`);
-  } catch (error) {
-    console.log(`✓ Saved to memory store for ${filename}`);
-    const key = filename.replace('.json', '');
-    memoryStore[key] = data;
-  }
-}
-
-module.exports = {
-  initializeDataFiles,
-  readJSON,
-  writeJSON
-};
+resetProducts();

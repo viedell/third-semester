@@ -37,6 +37,10 @@ function productsView({ products, category, search, user }) {
             <option value="Electronics" ${category === 'Electronics' ? 'selected' : ''}>Electronics</option>
             <option value="Accessories" ${category === 'Accessories' ? 'selected' : ''}>Accessories</option>
             <option value="Storage" ${category === 'Storage' ? 'selected' : ''}>Storage</option>
+            <option value="Wearables" ${category === 'Wearables' ? 'selected' : ''}>Wearables</option>
+            <option value="Audio" ${category === 'Audio' ? 'selected' : ''}>Audio</option>
+            <option value="Furniture" ${category === 'Furniture' ? 'selected' : ''}>Furniture</option>
+            <option value="Smart Home" ${category === 'Smart Home' ? 'selected' : ''}>Smart Home</option>
           </select>
           <button type="submit" class="btn">Filter</button>
         </form>
@@ -58,7 +62,7 @@ function productsView({ products, category, search, user }) {
             <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">${product.description || 'No description available'}</p>
             
             <div style="margin-bottom: 1rem;">
-              ${(product.features || ['Premium Quality', 'Latest Technology']).map(feature => `
+              ${(product.features || ['Premium Quality', 'Latest Technology']).slice(0, 3).map(feature => `
                 <span style="display: inline-block; background: var(--accent-glow); color: var(--accent); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin: 0.25rem; border: 1px solid rgba(255, 45, 85, 0.3);">
                   ${feature}
                 </span>
