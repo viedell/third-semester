@@ -1,16 +1,29 @@
 const bcrypt = require('bcryptjs');
 
-// Password hashing
+// Password hashing utilities
 async function hashPassword(password) {
-  const saltRounds = 12;
-  return await bcrypt.hash(password, saltRounds);
+  try {
+    const saltRounds = 12;
+    return await bcrypt.hash(password, saltRounds);
+  } catch (error) {
+    console.error('Password hashing error:', error);
+    throw new Error('Failed to hash password');
+  }
 }
 
 async function comparePassword(password, hashedPassword) {
-  return await bcrypt.compare(password, hashedPassword);
+  try {
+    if (!password || !hashedPassword) {
+      return false;
+    }
+    return await bcrypt.compare(password, hashedPassword);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 }
 
-// Validation
+// Validation utilities
 function isValidEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -21,8 +34,14 @@ function isValidPassword(password) {
 }
 
 function sanitizeUser(user) {
+  if (!user) return null;
   const { password, ...sanitized } = user;
   return sanitized;
+}
+
+// Generate unique ID
+function generateId() {
+  return Date.now() + Math.floor(Math.random() * 1000);
 }
 
 module.exports = {
@@ -30,5 +49,6 @@ module.exports = {
   comparePassword,
   isValidEmail,
   isValidPassword,
-  sanitizeUser
+  sanitizeUser,
+  generateId
 };

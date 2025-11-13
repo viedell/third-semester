@@ -14,20 +14,24 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session middleware
+// Enhanced Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-2024',
+  name: 'techstore.sid',
+  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-2024-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax'
   }
 }));
 
 // Make user available in all routes
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+  console.log('Session user:', req.session.user ? req.session.user.email : 'No user');
   next();
 });
 
