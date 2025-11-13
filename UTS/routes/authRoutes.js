@@ -28,11 +28,16 @@ router.get('/register', requireGuest, (req, res) => {
 // Login handler
 router.post('/login', requireGuest, async (req, res) => {
   try {
-    const { email, password, redirect = '/' } = req.body;
+    const { email, password } = req.body;
+    const redirect = req.body.redirect || '/';
     
-    console.log('🔑 LOGIN ATTEMPT:', { email });
+    console.log('🔑 LOGIN ATTEMPT:', { 
+      email: email,
+      passwordLength: password ? password.length : 0 
+    });
     
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.send(loginView({ 
         redirect, 
         error: 'Email and password are required',
@@ -41,18 +46,26 @@ router.post('/login', requireGuest, async (req, res) => {
     }
 
     const users = await readJSON('users.json');
-    console.log('📋 Total users:', users.length);
+    console.log('📋 Total users in database:', users.length);
     
-    // Debug: log all users
-    users.forEach(user => {
-      console.log(`   - ${user.email} (${user.name})`);
+    // Debug: show all users and their passwords
+    users.forEach((user, index) => {
+      console.log(`   User ${index + 1}:`, {
+        email: user.email,
+        name: user.name,
+        passwordHash: user.password ? user.password.substring(0, 20) + '...' : 'MISSING',
+        passwordLength: user.password ? user.password.length : 0
+      });
     });
     
-    const user = users.find(u => u.email === email.toLowerCase().trim());
-    console.log('👤 Found user:', user ? 'Yes' : 'No');
-
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = users.find(u => u.email === normalizedEmail);
+    
+    console.log('👤 Looking for user:', normalizedEmail);
+    console.log('👤 Found user:', user ? 'YES' : 'NO');
+    
     if (!user) {
-      console.log('❌ User not found');
+      console.log('❌ User not found in database');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -60,12 +73,16 @@ router.post('/login', requireGuest, async (req, res) => {
       }));
     }
 
-    console.log('🔐 Comparing password...');
+    console.log('🔐 Password comparison:');
+    console.log('   Input password:', password);
+    console.log('   Stored hash:', user.password);
+    console.log('   Stored hash length:', user.password.length);
+    
     const isPasswordValid = comparePassword(password, user.password);
     console.log('✅ Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {
-      console.log('❌ Invalid password');
+      console.log('❌ Password comparison failed');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -79,7 +96,7 @@ router.post('/login', requireGuest, async (req, res) => {
     
     req.session.user = sanitizedUser;
     
-    console.log('✅ LOGIN SUCCESSFUL');
+    console.log('✅ LOGIN SUCCESSFUL - Redirecting to:', redirect);
     res.redirect(redirect);
     
   } catch (error) {
@@ -92,15 +109,20 @@ router.post('/login', requireGuest, async (req, res) => {
   }
 });
 
-// Register handler - SIMPLIFIED: Only email and password
+// Register handler - FIXED VERSION
 router.post('/register', requireGuest, async (req, res) => {
   try {
     const { email, password, confirmPassword } = req.body;
     
-    console.log('📝 REGISTRATION ATTEMPT:', { email });
+    console.log('📝 REGISTRATION ATTEMPT - RAW DATA:', { 
+      email: email,
+      password: password ? '***' + password.substring(password.length - 2) : 'MISSING',
+      confirmPassword: confirmPassword ? '***' + confirmPassword.substring(confirmPassword.length - 2) : 'MISSING'
+    });
     
-    // Validation - Only email and password needed
+    // Validation
     if (!email || !password || !confirmPassword) {
+      console.log('❌ Missing fields');
       return res.send(registerView({ 
         error: 'All fields are required',
         user: req.session.user 
@@ -108,6 +130,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidEmail(email)) {
+      console.log('❌ Invalid email format');
       return res.send(registerView({ 
         error: 'Please enter a valid email address',
         user: req.session.user 
@@ -115,6 +138,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidPassword(password)) {
+      console.log('❌ Password too short');
       return res.send(registerView({ 
         error: 'Password must be at least 6 characters long',
         user: req.session.user 
@@ -122,6 +146,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (password !== confirmPassword) {
+      console.log('❌ Passwords do not match');
       return res.send(registerView({ 
         error: 'Passwords do not match',
         user: req.session.user 
@@ -129,49 +154,64 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     const users = await readJSON('users.json');
-    console.log('📋 Current users:', users.length);
+    console.log('📋 Current users count:', users.length);
     
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
     if (users.find(u => u.email === normalizedEmail)) {
+      console.log('❌ User already exists');
       return res.send(registerView({ 
         error: 'User with this email already exists',
         user: req.session.user 
       }));
     }
 
-    // Create new user - Use email username as name
+    // Create new user - FIXED: Proper password handling
+    console.log('👤 Creating new user...');
+    
+    // Generate name from email
     const emailUsername = normalizedEmail.split('@')[0];
     const name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
     
-    console.log('👤 Creating new user...');
+    // Hash the PASSWORD, not the email
     const hashedPassword = hashPassword(password);
+    console.log('🔐 Password hashing:');
+    console.log('   Original password:', password);
+    console.log('   Hashed password:', hashedPassword);
+    console.log('   Hash length:', hashedPassword.length);
     
     const newUser = {
       id: generateId(),
       name: name,
       email: normalizedEmail,
-      password: hashedPassword,
+      password: hashedPassword, // This should be the HASHED PASSWORD
       createdAt: new Date().toISOString()
     };
 
-    console.log('✅ New user:', { name: newUser.name, email: newUser.email });
+    console.log('✅ New user created:', { 
+      id: newUser.id, 
+      name: newUser.name, 
+      email: newUser.email,
+      password: newUser.password.substring(0, 20) + '...'
+    });
     
     users.push(newUser);
+    console.log('💾 Saving users to database...');
     await writeJSON('users.json', users);
-    console.log('💾 User saved to database');
+    console.log('✅ Users saved successfully');
 
     // Auto-login after registration
     const sanitizedUser = sanitizeUser(newUser);
+    console.log('🎯 Setting session for new user:', sanitizedUser);
     req.session.user = sanitizedUser;
     
-    console.log('✅ REGISTRATION SUCCESSFUL');
+    console.log('✅ REGISTRATION SUCCESSFUL - Redirecting to profile');
     res.redirect('/profile');
     
   } catch (error) {
     console.error('💥 REGISTRATION ERROR:', error);
     res.send(registerView({ 
-      error: 'Server error during registration',
+      error: 'Server error during registration: ' + error.message,
       user: req.session.user 
     }));
   }

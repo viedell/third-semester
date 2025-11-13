@@ -1,14 +1,13 @@
-// Simple and reliable password system
 const crypto = require('crypto');
 
+// Simple and reliable password system
 function hashPassword(password) {
-  // Simple but consistent hashing for development
-  return crypto.createHash('sha256').update(password).digest('hex');
+  return crypto.createHash('sha256').update(String(password)).digest('hex');
 }
 
 function comparePassword(password, hashedPassword) {
   if (!password || !hashedPassword) return false;
-  const hashedInput = crypto.createHash('sha256').update(password).digest('hex');
+  const hashedInput = crypto.createHash('sha256').update(String(password)).digest('hex');
   return hashedInput === hashedPassword;
 }
 
