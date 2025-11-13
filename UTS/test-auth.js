@@ -1,37 +1,37 @@
-const { readJSON } = require('./utils/fileHandler');
+const fs = require('fs').promises;
+const path = require('path');
 
-async function debugUsers() {
-  console.log('🔍 DEBUGGING USERS DATABASE');
-  console.log('='.repeat(60));
+async function emergencyReset() {
+  console.log('🚨 EMERGENCY RESET - Fixing User Database');
+  console.log('='.repeat(50));
   
   try {
-    const users = await readJSON('users.json');
-    console.log(`📊 Total users: ${users.length}\n`);
+    const dataDir = path.join(__dirname, 'data');
     
-    if (users.length === 0) {
-      console.log('❌ No users found in database');
-      return;
-    }
+    // Force create data directory
+    await fs.mkdir(dataDir, { recursive: true });
+    console.log('✅ Data directory created/verified');
     
-    users.forEach((user, index) => {
-      console.log(`👤 USER ${index + 1}:`);
-      console.log(`   ID: ${user.id}`);
-      console.log(`   Name: ${user.name}`);
-      console.log(`   Email: ${user.email}`);
-      console.log(`   Password Hash: ${user.password ? user.password.substring(0, 30) + '...' : '❌ MISSING'}`);
-      console.log(`   Password Length: ${user.password ? user.password.length : 'N/A'}`);
-      console.log(`   Created: ${user.createdAt}`);
-      console.log('');
-    });
+    // Create EMPTY users array
+    const users = [];
+    await fs.writeFile(path.join(dataDir, 'users.json'), JSON.stringify(users, null, 2));
+    console.log('✅ users.json reset to empty array');
     
-    console.log('💡 ANALYSIS:');
-    console.log('   - Password should be 64 characters (SHA256 hash)');
-    console.log('   - Email should be properly formatted');
-    console.log('   - No duplicate emails');
+    // Verify the file was created
+    const usersData = await fs.readFile(path.join(dataDir, 'users.json'), 'utf-8');
+    const parsedUsers = JSON.parse(usersData);
+    console.log(`✅ Verification: users.json contains ${parsedUsers.length} users`);
+    
+    console.log('\n🎉 EMERGENCY RESET COMPLETE!');
+    console.log('💡 Now you can:');
+    console.log('   1. Run: npm start');
+    console.log('   2. Go to: /auth/register');
+    console.log('   3. Register with: a@a.com / password123');
+    console.log('   4. It should work now!');
     
   } catch (error) {
-    console.error('❌ Debug error:', error);
+    console.error('❌ EMERGENCY RESET FAILED:', error);
   }
 }
 
-debugUsers();
+emergencyReset();

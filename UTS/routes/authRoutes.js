@@ -48,14 +48,9 @@ router.post('/login', requireGuest, async (req, res) => {
     const users = await readJSON('users.json');
     console.log('📋 Total users in database:', users.length);
     
-    // Debug: show all users and their passwords
+    // Debug: show all users
     users.forEach((user, index) => {
-      console.log(`   User ${index + 1}:`, {
-        email: user.email,
-        name: user.name,
-        passwordHash: user.password ? user.password.substring(0, 20) + '...' : 'MISSING',
-        passwordLength: user.password ? user.password.length : 0
-      });
+      console.log(`   User ${index + 1}: ${user.email} (${user.name})`);
     });
     
     const normalizedEmail = email.toLowerCase().trim();
@@ -74,10 +69,6 @@ router.post('/login', requireGuest, async (req, res) => {
     }
 
     console.log('🔐 Password comparison:');
-    console.log('   Input password:', password);
-    console.log('   Stored hash:', user.password);
-    console.log('   Stored hash length:', user.password.length);
-    
     const isPasswordValid = comparePassword(password, user.password);
     console.log('✅ Password valid:', isPasswordValid);
 
@@ -109,15 +100,14 @@ router.post('/login', requireGuest, async (req, res) => {
   }
 });
 
-// Register handler - FIXED VERSION
+// Register handler - SIMPLIFIED AND FIXED
 router.post('/register', requireGuest, async (req, res) => {
   try {
     const { email, password, confirmPassword } = req.body;
     
-    console.log('📝 REGISTRATION ATTEMPT - RAW DATA:', { 
+    console.log('📝 REGISTRATION ATTEMPT:', { 
       email: email,
-      password: password ? '***' + password.substring(password.length - 2) : 'MISSING',
-      confirmPassword: confirmPassword ? '***' + confirmPassword.substring(confirmPassword.length - 2) : 'MISSING'
+      password: password ? '***' : 'MISSING'
     });
     
     // Validation
@@ -153,8 +143,15 @@ router.post('/register', requireGuest, async (req, res) => {
       }));
     }
 
-    const users = await readJSON('users.json');
-    console.log('📋 Current users count:', users.length);
+    // Read users - MAKE SURE WE GET THE CURRENT DATA
+    let users = [];
+    try {
+      users = await readJSON('users.json');
+      console.log('📋 Current users count:', users.length);
+    } catch (error) {
+      console.log('📋 No users file found, starting fresh');
+      users = [];
+    }
     
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
@@ -166,52 +163,59 @@ router.post('/register', requireGuest, async (req, res) => {
       }));
     }
 
-    // Create new user - FIXED: Proper password handling
+    // Create new user
     console.log('👤 Creating new user...');
     
     // Generate name from email
     const emailUsername = normalizedEmail.split('@')[0];
     const name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
     
-    // Hash the PASSWORD, not the email
+    // Hash the password
     const hashedPassword = hashPassword(password);
-    console.log('🔐 Password hashing:');
-    console.log('   Original password:', password);
-    console.log('   Hashed password:', hashedPassword);
-    console.log('   Hash length:', hashedPassword.length);
+    console.log('🔐 Password hashed successfully');
     
     const newUser = {
       id: generateId(),
       name: name,
       email: normalizedEmail,
-      password: hashedPassword, // This should be the HASHED PASSWORD
+      password: hashedPassword,
       createdAt: new Date().toISOString()
     };
 
     console.log('✅ New user created:', { 
-      id: newUser.id, 
       name: newUser.name, 
-      email: newUser.email,
-      password: newUser.password.substring(0, 20) + '...'
+      email: newUser.email 
     });
     
+    // Add to users array
     users.push(newUser);
+    
+    // SAVE USERS - THIS IS THE CRITICAL PART
     console.log('💾 Saving users to database...');
     await writeJSON('users.json', users);
-    console.log('✅ Users saved successfully');
+    console.log('✅ Users saved successfully!');
+    
+    // Verify the save worked
+    const verifyUsers = await readJSON('users.json');
+    console.log('🔍 Verification - users in database:', verifyUsers.length);
+    
+    if (verifyUsers.length === 0) {
+      console.log('💥 CRITICAL: Users were not saved!');
+      throw new Error('Users database save failed');
+    }
 
     // Auto-login after registration
     const sanitizedUser = sanitizeUser(newUser);
     console.log('🎯 Setting session for new user:', sanitizedUser);
     req.session.user = sanitizedUser;
     
-    console.log('✅ REGISTRATION SUCCESSFUL - Redirecting to profile');
+    console.log('✅ REGISTRATION COMPLETE - Redirecting to profile');
     res.redirect('/profile');
     
   } catch (error) {
     console.error('💥 REGISTRATION ERROR:', error);
     res.send(registerView({ 
-      error: 'Server error during registration: ' + error.message,
+      error: 'Registration failed: ' + error.message,
       user: req.session.user 
     }));
   }
