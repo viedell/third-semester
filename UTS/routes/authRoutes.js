@@ -14,6 +14,12 @@ const registerView = require('../views/register');
 
 const router = express.Router();
 
+// Debug middleware
+router.use((req, res, next) => {
+  console.log(`🔐 Auth Route: ${req.method} ${req.path}`);
+  next();
+});
+
 // Login page
 router.get('/login', requireGuest, (req, res) => {
   const redirect = req.query.redirect || '/';
@@ -30,9 +36,10 @@ router.post('/login', requireGuest, async (req, res) => {
   try {
     const { email, password, redirect = '/' } = req.body;
     
-    console.log('Login attempt for:', email);
+    console.log('🔑 LOGIN ATTEMPT:', { email, passwordLength: password?.length });
     
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.send(loginView({ 
         redirect, 
         error: 'Email and password are required',
@@ -41,13 +48,18 @@ router.post('/login', requireGuest, async (req, res) => {
     }
 
     const users = await readJSON('users.json');
-    console.log('Total users in database:', users.length);
+    console.log('📋 Total users in database:', users.length);
+    
+    // Debug: show all users
+    users.forEach((user, i) => {
+      console.log(`   User ${i}: ${user.email} (ID: ${user.id})`);
+    });
     
     const user = users.find(u => u.email === email);
-    console.log('Found user:', user ? 'Yes' : 'No');
+    console.log('👤 Found user:', user ? `Yes (${user.name})` : 'No');
 
     if (!user) {
-      console.log('User not found');
+      console.log('❌ User not found in database');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -55,11 +67,15 @@ router.post('/login', requireGuest, async (req, res) => {
       }));
     }
 
-    console.log('Comparing passwords...');
+    console.log('🔐 Comparing passwords...');
+    console.log('   Input password:', password);
+    console.log('   Stored hash:', user.password?.substring(0, 20) + '...');
+    
     const isPasswordValid = await comparePassword(password, user.password);
-    console.log('Password valid:', isPasswordValid);
+    console.log('✅ Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {
+      console.log('❌ Password comparison failed');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -69,27 +85,14 @@ router.post('/login', requireGuest, async (req, res) => {
 
     // Set session
     const sanitizedUser = sanitizeUser(user);
-    console.log('Setting session user:', sanitizedUser);
+    console.log('🎯 Setting session user:', sanitizedUser);
     req.session.user = sanitizedUser;
     
-    // Save session
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.send(loginView({ 
-          redirect, 
-          error: 'Login failed - session error',
-          user: req.session.user 
-        }));
-      }
-      
-      console.log('Login successful, redirecting to:', redirect);
-      // Redirect to intended page or home
-      res.redirect(redirect);
-    });
+    console.log('✅ LOGIN SUCCESSFUL - Redirecting to:', redirect);
+    res.redirect(redirect);
     
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('💥 LOGIN ERROR:', error);
     res.send(loginView({ 
       redirect: req.body.redirect || '/', 
       error: 'Server error during login',
@@ -103,10 +106,11 @@ router.post('/register', requireGuest, async (req, res) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
     
-    console.log('Registration attempt:', { name, email });
+    console.log('📝 REGISTRATION ATTEMPT:', { name, email, passwordLength: password?.length });
     
     // Validation
     if (!name || !email || !password || !confirmPassword) {
+      console.log('❌ Missing fields');
       return res.send(registerView({ 
         error: 'All fields are required',
         user: req.session.user 
@@ -114,6 +118,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidEmail(email)) {
+      console.log('❌ Invalid email format');
       return res.send(registerView({ 
         error: 'Please enter a valid email address',
         user: req.session.user 
@@ -121,6 +126,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidPassword(password)) {
+      console.log('❌ Password too short');
       return res.send(registerView({ 
         error: 'Password must be at least 6 characters long',
         user: req.session.user 
@@ -128,6 +134,7 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (password !== confirmPassword) {
+      console.log('❌ Passwords do not match');
       return res.send(registerView({ 
         error: 'Passwords do not match',
         user: req.session.user 
@@ -135,10 +142,11 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     const users = await readJSON('users.json');
-    console.log('Current users count:', users.length);
+    console.log('📋 Current users count:', users.length);
     
     // Check if user already exists
     if (users.find(u => u.email === email)) {
+      console.log('❌ User already exists');
       return res.send(registerView({ 
         error: 'User with this email already exists',
         user: req.session.user 
@@ -146,9 +154,9 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     // Create new user
-    console.log('Creating new user...');
+    console.log('👤 Creating new user...');
     const hashedPassword = await hashPassword(password);
-    console.log('Password hashed successfully');
+    console.log('🔐 Password hashed:', hashedPassword);
     
     const newUser = {
       id: generateId(),
@@ -158,35 +166,30 @@ router.post('/register', requireGuest, async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    console.log('New user created:', { id: newUser.id, name: newUser.name, email: newUser.email });
+    console.log('✅ New user created:', { 
+      id: newUser.id, 
+      name: newUser.name, 
+      email: newUser.email,
+      password: newUser.password 
+    });
     
     users.push(newUser);
-    console.log('Saving users to database...');
+    console.log('💾 Saving users to database...');
     await writeJSON('users.json', users);
-    console.log('Users saved successfully');
+    console.log('✅ Users saved successfully');
 
     // Auto-login after registration
     const sanitizedUser = sanitizeUser(newUser);
-    console.log('Setting session for new user:', sanitizedUser);
+    console.log('🎯 Setting session for new user:', sanitizedUser);
     req.session.user = sanitizedUser;
     
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.send(registerView({ 
-          error: 'Registration successful but login failed',
-          user: req.session.user 
-        }));
-      }
-      
-      console.log('Registration successful, redirecting to profile');
-      res.redirect('/profile');
-    });
+    console.log('✅ REGISTRATION SUCCESSFUL - Redirecting to profile');
+    res.redirect('/profile');
     
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('💥 REGISTRATION ERROR:', error);
     res.send(registerView({ 
-      error: 'Server error during registration: ' + error.message,
+      error: 'Server error during registration',
       user: req.session.user 
     }));
   }
@@ -194,7 +197,7 @@ router.post('/register', requireGuest, async (req, res) => {
 
 // Logout handler
 router.get('/logout', (req, res) => {
-  console.log('Logging out user:', req.session.user?.email);
+  console.log('🚪 LOGOUT:', req.session.user?.email);
   req.session.destroy((err) => {
     if (err) {
       console.error('Logout error:', err);
