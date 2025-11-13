@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 
-// Password hashing utilities
+// Password hashing
 async function hashPassword(password) {
   const saltRounds = 12;
   return await bcrypt.hash(password, saltRounds);
@@ -10,7 +10,7 @@ async function comparePassword(password, hashedPassword) {
   return await bcrypt.compare(password, hashedPassword);
 }
 
-// Validation utilities
+// Validation
 function isValidEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);

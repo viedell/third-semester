@@ -1,14 +1,19 @@
 {
-  "name": "techstore",
+  "name": "techstore-ecommerce",
   "version": "1.0.0",
+  "description": "Futuristic Tech E-commerce with Authentication",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "setup": "node setup.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "bcryptjs": "^2.4.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

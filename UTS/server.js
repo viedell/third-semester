@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const path = require('path');
 const publicRoutes = require('./routes/publicRoutes');
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -11,13 +12,15 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Session middleware for authentication
+// Session middleware
 app.use(session({
-  secret: 'techstore-secret-key-change-in-production',
+  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-2024',
   resave: false,
   saveUninitialized: false,
   cookie: {
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -33,21 +36,22 @@ app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 
-// Start server
+// Initialize and start server
 initializeDataFiles().then(() => {
   app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║               TECHSTORE E-COMMERCE SERVER                  ║
+║                🚀 TECHSTORE SERVER READY                  ║
 ╠════════════════════════════════════════════════════════════╣
-║  Server: http://localhost:${PORT}                             ║
+║  Server: http://localhost:${PORT}                            ║
+║  Environment: ${process.env.NODE_ENV || 'development'}       ║
 ║                                                            ║
-║  ✓ Authentication System                                   ║
-║  ✓ User Registration & Login                               ║
-║  ✓ Protected Cart & Checkout                               ║
-║  ✓ Order History                                           ║
-║  ✓ User Profiles                                           ║
+║  ✅ Authentication System                                  ║
+║  ✅ Product Catalog                                        ║
+║  ✅ Shopping Cart                                          ║
+║  ✅ Order Management                                       ║
+║  ✅ User Profiles                                          ║
 ╚════════════════════════════════════════════════════════════╝
     `);
   });
-});
+}).catch(console.error);

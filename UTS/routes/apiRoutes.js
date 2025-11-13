@@ -39,6 +39,10 @@ router.post('/cart', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
     
+    if (product.stock < quantity) {
+      return res.status(400).json({ error: 'Insufficient stock' });
+    }
+    
     const carts = await readJSON('carts.json');
     const userId = req.session.user.id;
     const userCart = carts[userId] || [];
@@ -172,7 +176,7 @@ router.post('/orders', requireAuth, async (req, res) => {
       paymentMethod,
       status: 'processing',
       createdAt: new Date().toISOString(),
-      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
     
     orders.push(newOrder);

@@ -1,33 +1,99 @@
 const { createLayout } = require('./layout');
-const { escapeHtml } = require('../utils/helpers');
 
-function productsView(products) {
+function productsView({ products, category, search, user }) {
   const content = `
-    <div class="section-header">
-      <h2>All Products</h2>
-      <p>Browse our complete collection of premium tech</p>
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(45deg, var(--accent), #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Our Products
+      </h1>
+      
+      <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <form method="GET" action="/products" style="display: flex; gap: 1rem; flex: 1;">
+          <input 
+            type="text" 
+            name="search" 
+            value="${search || ''}"
+            placeholder="Search products..."
+            style="
+              flex: 1;
+              padding: 0.75rem 1rem;
+              background: var(--surface);
+              border: 1px solid var(--border);
+              border-radius: 8px;
+              color: var(--text-primary);
+            "
+          >
+          <select 
+            name="category" 
+            style="
+              padding: 0.75rem 1rem;
+              background: var(--surface);
+              border: 1px solid var(--border);
+              border-radius: 8px;
+              color: var(--text-primary);
+            "
+          >
+            <option value="">All Categories</option>
+            <option value="Electronics" ${category === 'Electronics' ? 'selected' : ''}>Electronics</option>
+            <option value="Accessories" ${category === 'Accessories' ? 'selected' : ''}>Accessories</option>
+            <option value="Storage" ${category === 'Storage' ? 'selected' : ''}>Storage</option>
+          </select>
+          <button type="submit" class="btn">Filter</button>
+        </form>
+      </div>
     </div>
-
-    <div class="grid">
-      ${products.map(p => `
-        <div class="card" onclick="window.location.href='/product/${p.id}'">
-          <img src="${p.imageUrl}" alt="${escapeHtml(p.name)}" class="card-image" loading="lazy">
-          <div class="card-content">
-            <div class="card-category">${escapeHtml(p.category)}</div>
-            <div class="card-title">${escapeHtml(p.name)}</div>
-            <div class="card-desc">${escapeHtml(p.description)}</div>
-            <div class="card-footer">
-              <div class="price">${p.price}</div>
-              <div class="stock-badge">${p.stock} in stock</div>
+    
+    ${products.length === 0 ? `
+      <div style="text-align: center; padding: 4rem 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
+        <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">No products found</h2>
+        <p style="color: var(--text-secondary);">Try adjusting your search or filter criteria</p>
+      </div>
+    ` : `
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+        ${products.map(product => `
+          <div class="card">
+            <img src="${product.imageUrl}" alt="${product.name}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${product.name}</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">${product.description}</p>
+            
+            <div style="margin-bottom: 1rem;">
+              ${product.features.map(feature => `
+                <span style="display: inline-block; background: var(--accent-glow); color: var(--accent); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin: 0.25rem; border: 1px solid rgba(255, 45, 85, 0.3);">
+                  ${feature}
+                </span>
+              `).join('')}
             </div>
-            <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="event.stopPropagation(); addToCart(${p.id})">Add to Cart</button>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">$${product.price}</span>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: gold;">⭐</span>
+                <span style="color: var(--text-secondary);">${product.rating} (${product.reviews})</span>
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+              <a href="/products/${product.id}" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none; padding: 0.75rem;">
+                View Details
+              </a>
+              <button onclick="addToCart(${product.id})" class="btn" style="flex: 1;">
+                Add to Cart
+              </button>
+            </div>
+            
+            ${product.stock < 10 ? `
+              <div style="margin-top: 1rem; padding: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; text-align: center; color: var(--warning); font-size: 0.8rem; font-weight: 600;">
+                🔥 Only ${product.stock} left in stock!
+              </div>
+            ` : ''}
           </div>
-        </div>
-      `).join('')}
-    </div>
+        `).join('')}
+      </div>
+    `}
   `;
-
-  return createLayout('Products - TechStore', content);
+  
+  return createLayout('Products', content, user);
 }
 
-module.exports = { productsView };
+module.exports = productsView;

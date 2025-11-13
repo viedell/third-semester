@@ -4,17 +4,19 @@ function registerView({ error, user }) {
   const content = `
     <div style="max-width: 400px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 3rem;">
-        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">Create Account</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem;">Join TechStore and start shopping today</p>
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(45deg, var(--accent), #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+          Join TechStore
+        </h1>
+        <p style="color: var(--text-secondary);">Create your account and start shopping</p>
       </div>
 
       ${error ? `
         <div style="
-          background: rgba(255, 45, 85, 0.1);
-          border: 1px solid rgba(255, 45, 85, 0.3);
-          color: var(--accent);
-          padding: 1rem 1.25rem;
-          border-radius: 10px;
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          color: var(--error);
+          padding: 1rem;
+          border-radius: 8px;
           margin-bottom: 2rem;
           font-weight: 500;
         ">
@@ -33,10 +35,10 @@ function registerView({ error, user }) {
             required
             style="
               width: 100%;
-              padding: 1rem 1.25rem;
-              background: var(--surface-elevated);
+              padding: 1rem;
+              background: var(--surface);
               border: 1px solid var(--border);
-              border-radius: 10px;
+              border-radius: 8px;
               color: var(--text-primary);
               font-size: 1rem;
               transition: all 0.3s ease;
@@ -57,10 +59,10 @@ function registerView({ error, user }) {
             required
             style="
               width: 100%;
-              padding: 1rem 1.25rem;
-              background: var(--surface-elevated);
+              padding: 1rem;
+              background: var(--surface);
               border: 1px solid var(--border);
-              border-radius: 10px;
+              border-radius: 8px;
               color: var(--text-primary);
               font-size: 1rem;
               transition: all 0.3s ease;
@@ -81,10 +83,10 @@ function registerView({ error, user }) {
             required
             style="
               width: 100%;
-              padding: 1rem 1.25rem;
-              background: var(--surface-elevated);
+              padding: 1rem;
+              background: var(--surface);
               border: 1px solid var(--border);
-              border-radius: 10px;
+              border-radius: 8px;
               color: var(--text-primary);
               font-size: 1rem;
               transition: all 0.3s ease;
@@ -105,10 +107,10 @@ function registerView({ error, user }) {
             required
             style="
               width: 100%;
-              padding: 1rem 1.25rem;
-              background: var(--surface-elevated);
+              padding: 1rem;
+              background: var(--surface);
               border: 1px solid var(--border);
-              border-radius: 10px;
+              border-radius: 8px;
               color: var(--text-primary);
               font-size: 1rem;
               transition: all 0.3s ease;
@@ -121,21 +123,8 @@ function registerView({ error, user }) {
 
         <button 
           type="submit"
-          style="
-            width: 100%;
-            padding: 1rem 1.25rem;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
-          "
-          onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 45, 85, 0.4)';"
-          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(255, 45, 85, 0.3)';"
+          class="btn"
+          style="width: 100%; padding: 1rem; font-size: 1rem; margin-top: 1rem;"
         >
           Create Account
         </button>
@@ -147,19 +136,8 @@ function registerView({ error, user }) {
         </p>
         <a 
           href="/auth/login" 
-          style="
-            display: inline-block;
-            padding: 0.875rem 2rem;
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-          "
-          onmouseover="this.style.background='var(--surface)'; this.style.borderColor='var(--border-hover)';"
-          onmouseout="this.style.background='transparent'; this.style.borderColor='var(--border)';"
+          class="btn-secondary"
+          style="display: inline-block; padding: 0.875rem 2rem; text-decoration: none;"
         >
           Sign In
         </a>
@@ -167,7 +145,7 @@ function registerView({ error, user }) {
     </div>
   `;
 
-  return createLayout('Register - TechStore', content, user);
+  return createLayout('Register', content, user);
 }
 
 module.exports = registerView;
