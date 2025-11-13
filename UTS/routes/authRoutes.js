@@ -2,18 +2,20 @@ const express = require('express');
 const { readJSON, writeJSON } = require('../utils/fileHandler');
 const { hashPassword, comparePassword, isValidEmail, isValidPassword, sanitizeUser } = require('../utils/helpers');
 const { requireGuest } = require('../middleware/auth');
+const loginView = require('../views/login');
+const registerView = require('../views/register');
 
 const router = express.Router();
 
 // Login page
 router.get('/login', requireGuest, (req, res) => {
   const redirect = req.query.redirect || '/';
-  res.send(require('../views/login')({ redirect, error: null, user: req.session.user }));
+  res.send(loginView({ redirect, error: null, user: req.session.user }));
 });
 
 // Register page
 router.get('/register', requireGuest, (req, res) => {
-  res.send(require('../views/register')({ error: null, user: req.session.user }));
+  res.send(registerView({ error: null, user: req.session.user }));
 });
 
 // Login handler
@@ -22,7 +24,7 @@ router.post('/login', requireGuest, async (req, res) => {
     const { email, password, redirect = '/' } = req.body;
     
     if (!email || !password) {
-      return res.send(require('../views/login')({ 
+      return res.send(loginView({ 
         redirect, 
         error: 'Email and password are required',
         user: req.session.user 
@@ -33,7 +35,7 @@ router.post('/login', requireGuest, async (req, res) => {
     const user = users.find(u => u.email === email);
 
     if (!user || !(await comparePassword(password, user.password))) {
-      return res.send(require('../views/login')({ 
+      return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
         user: req.session.user 
@@ -47,7 +49,7 @@ router.post('/login', requireGuest, async (req, res) => {
     res.redirect(redirect);
   } catch (error) {
     console.error('Login error:', error);
-    res.send(require('../views/login')({ 
+    res.send(loginView({ 
       redirect: req.body.redirect || '/', 
       error: 'Server error during login',
       user: req.session.user 
@@ -62,28 +64,28 @@ router.post('/register', requireGuest, async (req, res) => {
     
     // Validation
     if (!name || !email || !password) {
-      return res.send(require('../views/register')({ 
+      return res.send(registerView({ 
         error: 'All fields are required',
         user: req.session.user 
       }));
     }
 
     if (!isValidEmail(email)) {
-      return res.send(require('../views/register')({ 
+      return res.send(registerView({ 
         error: 'Please enter a valid email address',
         user: req.session.user 
       }));
     }
 
     if (!isValidPassword(password)) {
-      return res.send(require('../views/register')({ 
+      return res.send(registerView({ 
         error: 'Password must be at least 6 characters long',
         user: req.session.user 
       }));
     }
 
     if (password !== confirmPassword) {
-      return res.send(require('../views/register')({ 
+      return res.send(registerView({ 
         error: 'Passwords do not match',
         user: req.session.user 
       }));
@@ -93,7 +95,7 @@ router.post('/register', requireGuest, async (req, res) => {
     
     // Check if user already exists
     if (users.find(u => u.email === email)) {
-      return res.send(require('../views/register')({ 
+      return res.send(registerView({ 
         error: 'User with this email already exists',
         user: req.session.user 
       }));
@@ -117,7 +119,7 @@ router.post('/register', requireGuest, async (req, res) => {
     res.redirect('/profile');
   } catch (error) {
     console.error('Registration error:', error);
-    res.send(require('../views/register')({ 
+    res.send(registerView({ 
       error: 'Server error during registration',
       user: req.session.user 
     }));

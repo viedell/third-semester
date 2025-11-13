@@ -1,7 +1,7 @@
 const { createLayout } = require('./layout');
 const { escapeHtml } = require('../utils/helpers');
 
-function homeView(products) {
+function homeView({ featuredProducts, user }) {
   const content = `
     <div class="hero">
       <h1>Premium Tech Products</h1>
