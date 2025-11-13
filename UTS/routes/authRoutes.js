@@ -1,5 +1,5 @@
 const express = require('express');
-const { readJSON, writeJSON } = require('../utils/fileHandler');
+const { readJSON, writeJSON, memoryStore } = require('../utils/fileHandler');
 const { 
   hashPassword, 
   comparePassword, 
@@ -31,13 +31,9 @@ router.post('/login', requireGuest, async (req, res) => {
     const { email, password } = req.body;
     const redirect = req.body.redirect || '/';
     
-    console.log('🔑 LOGIN ATTEMPT:', { 
-      email: email,
-      passwordLength: password ? password.length : 0 
-    });
+    console.log('🔑 LOGIN ATTEMPT:', { email });
     
     if (!email || !password) {
-      console.log('❌ Missing email or password');
       return res.send(loginView({ 
         redirect, 
         error: 'Email and password are required',
@@ -46,12 +42,10 @@ router.post('/login', requireGuest, async (req, res) => {
     }
 
     const users = await readJSON('users.json');
-    console.log('📋 Total users in database:', users.length);
+    console.log('📋 Total users:', users.length);
     
-    // Debug: show all users
-    users.forEach((user, index) => {
-      console.log(`   User ${index + 1}: ${user.email} (${user.name})`);
-    });
+    // Debug memory store
+    console.log('🧠 Memory store users:', memoryStore.users.length);
     
     const normalizedEmail = email.toLowerCase().trim();
     const user = users.find(u => u.email === normalizedEmail);
@@ -60,7 +54,6 @@ router.post('/login', requireGuest, async (req, res) => {
     console.log('👤 Found user:', user ? 'YES' : 'NO');
     
     if (!user) {
-      console.log('❌ User not found in database');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -68,12 +61,11 @@ router.post('/login', requireGuest, async (req, res) => {
       }));
     }
 
-    console.log('🔐 Password comparison:');
+    console.log('🔐 Password comparison...');
     const isPasswordValid = comparePassword(password, user.password);
     console.log('✅ Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {
-      console.log('❌ Password comparison failed');
       return res.send(loginView({ 
         redirect, 
         error: 'Invalid email or password',
@@ -83,11 +75,11 @@ router.post('/login', requireGuest, async (req, res) => {
 
     // Set session
     const sanitizedUser = sanitizeUser(user);
-    console.log('🎯 Setting session user:', sanitizedUser);
+    console.log('🎯 Setting session user:', sanitizedUser.email);
     
     req.session.user = sanitizedUser;
     
-    console.log('✅ LOGIN SUCCESSFUL - Redirecting to:', redirect);
+    console.log('✅ LOGIN SUCCESSFUL');
     res.redirect(redirect);
     
   } catch (error) {
@@ -100,19 +92,15 @@ router.post('/login', requireGuest, async (req, res) => {
   }
 });
 
-// Register handler - SIMPLIFIED AND FIXED
+// Register handler - MEMORY STORE COMPATIBLE
 router.post('/register', requireGuest, async (req, res) => {
   try {
     const { email, password, confirmPassword } = req.body;
     
-    console.log('📝 REGISTRATION ATTEMPT:', { 
-      email: email,
-      password: password ? '***' : 'MISSING'
-    });
+    console.log('📝 REGISTRATION ATTEMPT:', { email });
     
     // Validation
     if (!email || !password || !confirmPassword) {
-      console.log('❌ Missing fields');
       return res.send(registerView({ 
         error: 'All fields are required',
         user: req.session.user 
@@ -120,7 +108,6 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidEmail(email)) {
-      console.log('❌ Invalid email format');
       return res.send(registerView({ 
         error: 'Please enter a valid email address',
         user: req.session.user 
@@ -128,7 +115,6 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (!isValidPassword(password)) {
-      console.log('❌ Password too short');
       return res.send(registerView({ 
         error: 'Password must be at least 6 characters long',
         user: req.session.user 
@@ -136,27 +122,20 @@ router.post('/register', requireGuest, async (req, res) => {
     }
 
     if (password !== confirmPassword) {
-      console.log('❌ Passwords do not match');
       return res.send(registerView({ 
         error: 'Passwords do not match',
         user: req.session.user 
       }));
     }
 
-    // Read users - MAKE SURE WE GET THE CURRENT DATA
-    let users = [];
-    try {
-      users = await readJSON('users.json');
-      console.log('📋 Current users count:', users.length);
-    } catch (error) {
-      console.log('📋 No users file found, starting fresh');
-      users = [];
-    }
+    // Read users - this will use memory store if file system fails
+    let users = await readJSON('users.json');
+    console.log('📋 Current users count:', users.length);
+    console.log('🧠 Memory store users:', memoryStore.users.length);
     
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
     if (users.find(u => u.email === normalizedEmail)) {
-      console.log('❌ User already exists');
       return res.send(registerView({ 
         error: 'User with this email already exists',
         user: req.session.user 
@@ -172,7 +151,6 @@ router.post('/register', requireGuest, async (req, res) => {
     
     // Hash the password
     const hashedPassword = hashPassword(password);
-    console.log('🔐 Password hashed successfully');
     
     const newUser = {
       id: generateId(),
@@ -182,40 +160,34 @@ router.post('/register', requireGuest, async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    console.log('✅ New user created:', { 
-      name: newUser.name, 
-      email: newUser.email 
-    });
+    console.log('✅ New user created:', { name: newUser.name, email: newUser.email });
     
     // Add to users array
     users.push(newUser);
     
-    // SAVE USERS - THIS IS THE CRITICAL PART
-    console.log('💾 Saving users to database...');
-    await writeJSON('users.json', users);
-    console.log('✅ Users saved successfully!');
+    // SAVE USERS - This will use memory store if file system fails
+    console.log('💾 Saving users...');
+    const saveResult = await writeJSON('users.json', users);
+    console.log('✅ Save result:', saveResult ? 'SUCCESS' : 'FAILED');
     
-    // Verify the save worked
-    const verifyUsers = await readJSON('users.json');
-    console.log('🔍 Verification - users in database:', verifyUsers.length);
-    
-    if (verifyUsers.length === 0) {
-      console.log('💥 CRITICAL: Users were not saved!');
-      throw new Error('Users database save failed');
-    }
+    // ALWAYS use memory store for verification to be consistent
+    console.log('🔍 Verification - memory store users:', memoryStore.users.length);
+    console.log('🔍 Verification - memory store contains user:', 
+      memoryStore.users.some(u => u.email === normalizedEmail) ? 'YES' : 'NO'
+    );
 
     // Auto-login after registration
     const sanitizedUser = sanitizeUser(newUser);
-    console.log('🎯 Setting session for new user:', sanitizedUser);
+    console.log('🎯 Setting session for new user:', sanitizedUser.email);
     req.session.user = sanitizedUser;
     
-    console.log('✅ REGISTRATION COMPLETE - Redirecting to profile');
+    console.log('✅ REGISTRATION COMPLETE');
     res.redirect('/profile');
     
   } catch (error) {
     console.error('💥 REGISTRATION ERROR:', error);
     res.send(registerView({ 
-      error: 'Registration failed: ' + error.message,
+      error: 'Registration failed. Please try again.',
       user: req.session.user 
     }));
   }

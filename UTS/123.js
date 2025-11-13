@@ -1,37 +1,38 @@
-const fs = require('fs').promises;
-const path = require('path');
+const { memoryStore } = require('./utils/fileHandler');
+const { hashPassword, comparePassword } = require('./utils/helpers');
 
-async function emergencyReset() {
-  console.log('🚨 EMERGENCY RESET - Fixing User Database');
+function testMemoryAuth() {
+  console.log('🧪 TESTING MEMORY STORE AUTHENTICATION');
   console.log('='.repeat(50));
   
-  try {
-    const dataDir = path.join(__dirname, 'data');
-    
-    // Force create data directory
-    await fs.mkdir(dataDir, { recursive: true });
-    console.log('✅ Data directory created/verified');
-    
-    // Create EMPTY users array
-    const users = [];
-    await fs.writeFile(path.join(dataDir, 'users.json'), JSON.stringify(users, null, 2));
-    console.log('✅ users.json reset to empty array');
-    
-    // Verify the file was created
-    const usersData = await fs.readFile(path.join(dataDir, 'users.json'), 'utf-8');
-    const parsedUsers = JSON.parse(usersData);
-    console.log(`✅ Verification: users.json contains ${parsedUsers.length} users`);
-    
-    console.log('\n🎉 EMERGENCY RESET COMPLETE!');
-    console.log('💡 Now you can:');
-    console.log('   1. Run: npm start');
-    console.log('   2. Go to: /auth/register');
-    console.log('   3. Register with: a@a.com / password123');
-    console.log('   4. It should work now!');
-    
-  } catch (error) {
-    console.error('❌ EMERGENCY RESET FAILED:', error);
-  }
+  // Reset memory store
+  memoryStore.users = [];
+  
+  // Create test user in memory store
+  const testUser = {
+    id: 1001,
+    name: 'Testuser',
+    email: 'test@example.com',
+    password: hashPassword('password123'),
+    createdAt: new Date().toISOString()
+  };
+  
+  memoryStore.users.push(testUser);
+  
+  console.log('👤 Test user created in memory store:');
+  console.log('   Email:', testUser.email);
+  console.log('   Password: password123');
+  console.log('   Hashed:', testUser.password.substring(0, 20) + '...');
+  
+  console.log('\n📋 Memory store users:', memoryStore.users.length);
+  
+  // Test password comparison
+  console.log('\n🔐 TESTING PASSWORD:');
+  console.log('   Correct password:', comparePassword('password123', testUser.password));
+  console.log('   Wrong password:', comparePassword('wrong', testUser.password));
+  
+  console.log('\n✅ MEMORY STORE AUTH TEST COMPLETE');
+  console.log('💡 The memory store should work even if file system fails');
 }
 
-emergencyReset();
+testMemoryAuth();

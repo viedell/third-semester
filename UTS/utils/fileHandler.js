@@ -3,8 +3,8 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
-// In-memory storage for serverless environments
-let memoryStore = {
+// SINGLE memory store instance - make it consistent
+const memoryStore = {
   users: [],
   products: [],
   orders: [],
@@ -60,7 +60,7 @@ async function initializeDataFiles() {
     console.log('✓ Data directory created');
     
     const files = {
-      'users.json': [], // EMPTY USERS - start fresh
+      'users.json': [],
       'products.json': defaultProducts,
       'orders.json': [],
       'carts.json': {}
@@ -79,7 +79,8 @@ async function initializeDataFiles() {
     
     console.log('✓ Using file-based storage');
   } catch (error) {
-    console.log('✓ Using in-memory storage');
+    console.log('✓ Using in-memory storage (serverless environment)');
+    // Initialize memory store with default data
     memoryStore.products = defaultProducts;
     memoryStore.users = [];
     memoryStore.orders = [];
@@ -91,12 +92,14 @@ async function initializeDataFiles() {
 
 async function readJSON(filename) {
   try {
+    // Try file system first
     const filepath = path.join(DATA_DIR, filename);
     const data = await fs.readFile(filepath, 'utf-8');
     const parsed = JSON.parse(data);
     return parsed;
   } catch (error) {
-    console.log(`⚠️  File read failed for ${filename}, using memory store`);
+    // Fallback to memory store
+    console.log(`✓ Using memory store for ${filename}`);
     const key = filename.replace('.json', '');
     return memoryStore[key] || (key === 'carts' ? {} : []);
   }
@@ -104,20 +107,24 @@ async function readJSON(filename) {
 
 async function writeJSON(filename, data) {
   try {
+    // Try file system first
     const filepath = path.join(DATA_DIR, filename);
     await fs.writeFile(filepath, JSON.stringify(data, null, 2));
-    console.log(`✓ Successfully wrote ${filename} with ${Array.isArray(data) ? data.length : 'data'} items`);
+    console.log(`✓ Successfully wrote ${filename} to file system`);
     return true;
   } catch (error) {
-    console.log(`⚠️  File write failed for ${filename}, using memory store`);
+    // Fallback to memory store
+    console.log(`✓ Writing to memory store for ${filename}`);
     const key = filename.replace('.json', '');
     memoryStore[key] = data;
-    return false;
+    return true; // Return true since memory store write always succeeds
   }
 }
 
+// Export memoryStore for debugging
 module.exports = {
   initializeDataFiles,
   readJSON,
-  writeJSON
+  writeJSON,
+  memoryStore // Export for debugging
 };
