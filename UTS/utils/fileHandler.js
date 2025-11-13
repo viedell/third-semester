@@ -169,7 +169,7 @@ async function initializeDataFiles() {
     console.log('✓ Using file-based storage (local)');
   } catch (error) {
     // Fallback to in-memory storage (Vercel/serverless)
-    console.log('✓ Using in-memory storage (serverless)');
+    console.log('✓ Using in-memory storage (serverless!!)');
     memoryStore.products = defaultProducts;
   }
   
