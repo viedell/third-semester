@@ -5,9 +5,9 @@ function registerView({ error, user }) {
     <div style="max-width: 400px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 3rem;">
         <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(45deg, var(--accent), #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          Join TechStore
+          Create Account
         </h1>
-        <p style="color: var(--text-secondary);">Create your account and start shopping</p>
+        <p style="color: var(--text-secondary);">Join TechStore in seconds</p>
       </div>
 
       ${error ? `
@@ -25,30 +25,6 @@ function registerView({ error, user }) {
       ` : ''}
 
       <form method="POST" action="/auth/register" style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <div>
-          <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
-            Full Name
-          </label>
-          <input 
-            type="text" 
-            name="name" 
-            required
-            style="
-              width: 100%;
-              padding: 1rem;
-              background: var(--surface);
-              border: 1px solid var(--border);
-              border-radius: 8px;
-              color: var(--text-primary);
-              font-size: 1rem;
-              transition: all 0.3s ease;
-            "
-            placeholder="Enter your full name"
-            onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px var(--accent-glow)';"
-            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"
-          >
-        </div>
-
         <div>
           <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
             Email Address

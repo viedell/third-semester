@@ -133,66 +133,6 @@ const defaultProducts = [
     rating: 4.4,
     reviews: 123,
     features: ['4K Resolution', 'Built-in Battery', 'Android TV', '100" Projection']
-  },
-  {
-    id: 11,
-    name: 'Webcam Ultra HD',
-    price: 149.99,
-    stock: 35,
-    description: '4K webcam with AI background removal and studio-quality microphone',
-    category: 'Accessories',
-    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&h=400&fit=crop',
-    rating: 4.6,
-    reviews: 156,
-    features: ['4K Resolution', 'AI Background Removal', 'Studio Mic', 'Auto Focus']
-  },
-  {
-    id: 12,
-    name: 'Tablet Pro 12.9"',
-    price: 1099.99,
-    stock: 14,
-    description: 'Professional tablet with mini-LED display and M2 chip',
-    category: 'Electronics',
-    imageUrl: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=400&fit=crop',
-    rating: 4.9,
-    reviews: 278,
-    features: ['Mini-LED Display', 'M2 Chip', '5G Connectivity', 'Apple Pencil Support']
-  },
-  {
-    id: 13,
-    name: 'Smart Home Hub',
-    price: 199.99,
-    stock: 22,
-    description: 'Central smart home controller with voice assistant and Matter support',
-    category: 'Smart Home',
-    imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25856cd63?w=500&h=400&fit=crop',
-    rating: 4.5,
-    reviews: 89,
-    features: ['Voice Control', 'Matter Support', 'Zigbee & Z-Wave', 'Privacy Focused']
-  },
-  {
-    id: 14,
-    name: 'Drone Pro 4K',
-    price: 799.99,
-    stock: 8,
-    description: 'Professional drone with 4K camera and 30-minute flight time',
-    category: 'Electronics',
-    imageUrl: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=500&h=400&fit=crop',
-    rating: 4.7,
-    reviews: 134,
-    features: ['4K Camera', '30min Flight', 'GPS Tracking', 'Obstacle Avoidance']
-  },
-  {
-    id: 15,
-    name: 'External GPU Dock',
-    price: 349.99,
-    stock: 12,
-    description: 'Thunderbolt 4 eGPU dock for laptop graphics enhancement',
-    category: 'Accessories',
-    imageUrl: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&h=400&fit=crop',
-    rating: 4.4,
-    reviews: 76,
-    features: ['Thunderbolt 4', 'RTX 3070', 'Multi-port Hub', 'Tool-free Installation']
   }
 ];
 
@@ -217,7 +157,7 @@ async function initializeDataFiles() {
         console.log(`✓ ${filename} exists`);
       } catch {
         await fs.writeFile(filepath, JSON.stringify(defaultData, null, 2));
-        console.log(`✓ Created ${filename} with ${defaultData.length} products`);
+        console.log(`✓ Created ${filename} with ${Array.isArray(defaultData) ? defaultData.length : 'data'} items`);
       }
     }
     
@@ -237,7 +177,6 @@ async function readJSON(filename) {
   try {
     const data = await fs.readFile(path.join(DATA_DIR, filename), 'utf-8');
     const parsed = JSON.parse(data);
-    console.log(`✓ Loaded ${filename}:`, Array.isArray(parsed) ? `${parsed.length} items` : 'Object');
     return parsed;
   } catch (error) {
     console.log(`✓ Using memory store for ${filename}`);
@@ -249,7 +188,6 @@ async function readJSON(filename) {
 async function writeJSON(filename, data) {
   try {
     await fs.writeFile(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2));
-    console.log(`✓ Saved ${filename}`);
   } catch (error) {
     console.log(`✓ Saved to memory store for ${filename}`);
     const key = filename.replace('.json', '');
