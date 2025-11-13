@@ -1,218 +1,205 @@
 const express = require('express');
-const router = express.Router();
 const { readJSON, writeJSON } = require('../utils/fileHandler');
+const { requireAuth } = require('../middleware/auth');
 
-// Get all products
-router.get('/products', async (req, res) => {
-  try {
-    const products = await readJSON('products.json');
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get single product
-router.get('/product/:id', async (req, res) => {
-  try {
-    const products = await readJSON('products.json');
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-    
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create new product
-router.post('/products', async (req, res) => {
-  try {
-    const products = await readJSON('products.json');
-    const newProduct = {
-      id: products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1,
-      name: req.body.name,
-      price: parseFloat(req.body.price),
-      stock: parseInt(req.body.stock),
-      description: req.body.description,
-      category: req.body.category,
-      imageUrl: req.body.imageUrl || 'https://via.placeholder.com/400'
-    };
-    
-    products.push(newProduct);
-    await writeJSON('products.json', products);
-    
-    res.status(201).json(newProduct);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get all users
-router.get('/users', async (req, res) => {
-  try {
-    const users = await readJSON('users.json');
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create new user
-router.post('/users', async (req, res) => {
-  try {
-    const users = await readJSON('users.json');
-    const newUser = {
-      id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-      name: req.body.name,
-      email: req.body.email,
-      createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    await writeJSON('users.json', users);
-    
-    res.status(201).json(newUser);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+const router = express.Router();
 
 // Get cart
-router.get('/cart', async (req, res) => {
+router.get('/cart', requireAuth, async (req, res) => {
   try {
-    const cart = await readJSON('cart.json');
-    res.json(cart);
+    const carts = await readJSON('carts.json');
+    const userCart = carts[req.session.user.id] || [];
+    
+    // Get product details for cart items
+    const products = await readJSON('products.json');
+    const cartWithDetails = userCart.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      return product ? { ...item, product } : null;
+    }).filter(Boolean);
+    
+    res.json(cartWithDetails);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch cart' });
   }
 });
 
 // Add to cart
-router.post('/cart', async (req, res) => {
+router.post('/cart', requireAuth, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
-    const cart = await readJSON('cart.json');
-    const products = await readJSON('products.json');
+    const { productId, quantity = 1 } = req.body;
     
-    const product = products.find(p => p.id === productId);
+    if (!productId) {
+      return res.status(400).json({ error: 'Product ID is required' });
+    }
+    
+    const products = await readJSON('products.json');
+    const product = products.find(p => p.id === parseInt(productId));
+    
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    const existingItem = cart.find(item => item.productId === productId);
+    const carts = await readJSON('carts.json');
+    const userId = req.session.user.id;
+    const userCart = carts[userId] || [];
+    
+    // Check if product already in cart
+    const existingItem = userCart.find(item => item.productId === parseInt(productId));
     
     if (existingItem) {
-      existingItem.quantity += quantity || 1;
+      existingItem.quantity += parseInt(quantity);
     } else {
-      cart.push({ productId, quantity: quantity || 1 });
+      userCart.push({
+        productId: parseInt(productId),
+        quantity: parseInt(quantity),
+        addedAt: new Date().toISOString()
+      });
     }
     
-    await writeJSON('cart.json', cart);
-    res.json({ message: 'Added to cart', cart });
+    carts[userId] = userCart;
+    await writeJSON('carts.json', carts);
+    
+    res.json({ success: true, cart: userCart });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to add to cart' });
   }
 });
 
-// Update cart quantity
-router.patch('/cart', async (req, res) => {
+// Update cart item quantity
+router.put('/cart/:productId', requireAuth, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
-    const cart = await readJSON('cart.json');
+    const { productId } = req.params;
+    const { quantity } = req.body;
     
-    const item = cart.find(i => i.productId === productId);
+    const carts = await readJSON('carts.json');
+    const userId = req.session.user.id;
+    const userCart = carts[userId] || [];
+    
+    const item = userCart.find(item => item.productId === parseInt(productId));
+    
     if (!item) {
-      return res.status(404).json({ error: 'Item not in cart' });
+      return res.status(404).json({ error: 'Item not found in cart' });
     }
     
     if (quantity <= 0) {
-      const index = cart.indexOf(item);
-      cart.splice(index, 1);
+      // Remove item if quantity is 0 or less
+      carts[userId] = userCart.filter(item => item.productId !== parseInt(productId));
     } else {
-      item.quantity = quantity;
+      item.quantity = parseInt(quantity);
     }
     
-    await writeJSON('cart.json', cart);
-    res.json({ message: 'Cart updated', cart });
+    await writeJSON('carts.json', carts);
+    res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to update cart' });
   }
 });
 
 // Remove from cart
-router.delete('/cart/:productId', async (req, res) => {
+router.delete('/cart/:productId', requireAuth, async (req, res) => {
   try {
-    const productId = parseInt(req.params.productId);
-    const cart = await readJSON('cart.json');
+    const { productId } = req.params;
     
-    const index = cart.findIndex(item => item.productId === productId);
-    if (index === -1) {
-      return res.status(404).json({ error: 'Item not in cart' });
+    const carts = await readJSON('carts.json');
+    const userId = req.session.user.id;
+    const userCart = carts[userId] || [];
+    
+    carts[userId] = userCart.filter(item => item.productId !== parseInt(productId));
+    await writeJSON('carts.json', carts);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove from cart' });
+  }
+});
+
+// Create order
+router.post('/orders', requireAuth, async (req, res) => {
+  try {
+    const { shippingAddress, paymentMethod } = req.body;
+    
+    if (!shippingAddress || !paymentMethod) {
+      return res.status(400).json({ error: 'Shipping address and payment method are required' });
     }
     
-    cart.splice(index, 1);
-    await writeJSON('cart.json', cart);
-    
-    res.json({ message: 'Item removed', cart });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get all orders
-router.get('/orders', async (req, res) => {
-  try {
-    const orders = await readJSON('orders.json');
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create order (checkout)
-router.post('/orders', async (req, res) => {
-  try {
-    const cart = await readJSON('cart.json');
+    const carts = await readJSON('carts.json');
     const products = await readJSON('products.json');
     const orders = await readJSON('orders.json');
     
-    if (cart.length === 0) {
+    const userId = req.session.user.id;
+    const userCart = carts[userId] || [];
+    
+    if (userCart.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
     }
     
-    const orderItems = cart.map(item => {
+    // Calculate total and verify stock
+    let total = 0;
+    const orderItems = [];
+    
+    for (const item of userCart) {
       const product = products.find(p => p.id === item.productId);
-      return {
-        productId: item.productId,
+      if (!product) {
+        return res.status(400).json({ error: `Product ${item.productId} not found` });
+      }
+      
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ 
+          error: `Insufficient stock for ${product.name}. Available: ${product.stock}` 
+        });
+      }
+      
+      total += product.price * item.quantity;
+      orderItems.push({
+        productId: product.id,
         name: product.name,
         price: product.price,
-        quantity: item.quantity
-      };
-    });
+        quantity: item.quantity,
+        imageUrl: product.imageUrl
+      });
+      
+      // Update product stock
+      product.stock -= item.quantity;
+    }
     
-    const total = orderItems.reduce((sum, item) => 
-      sum + (item.price * item.quantity), 0
-    );
-    
+    // Create order
     const newOrder = {
-      id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1,
+      id: Date.now(),
+      userId,
       items: orderItems,
       total,
-      status: 'pending',
-      date: new Date().toISOString()
+      shippingAddress,
+      paymentMethod,
+      status: 'processing',
+      createdAt: new Date().toISOString(),
+      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
     };
     
     orders.push(newOrder);
-    await writeJSON('orders.json', orders);
-    await writeJSON('cart.json', []); // Clear cart
     
-    res.status(201).json(newOrder);
+    // Clear user cart
+    carts[userId] = [];
+    
+    // Save all changes
+    await writeJSON('orders.json', orders);
+    await writeJSON('carts.json', carts);
+    await writeJSON('products.json', products);
+    
+    res.json({ success: true, order: newOrder });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Order creation error:', error);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// Get user orders
+router.get('/orders', requireAuth, async (req, res) => {
+  try {
+    const orders = await readJSON('orders.json');
+    const userOrders = orders.filter(order => order.userId === req.session.user.id);
+    res.json(userOrders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
 
