@@ -2,6 +2,7 @@
   {
     "id": 1,
     "name": "Quantum Laptop Pro",
+    "price": 1999.99,
     "stock": 8,
     "description": "Next-gen quantum computing laptop with neural processor",
     "category": "Electronics",
