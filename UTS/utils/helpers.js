@@ -1,12 +1,15 @@
-// Simple password handling without bcrypt for now to eliminate complexity
+// Simple and reliable password system
+const crypto = require('crypto');
+
 function hashPassword(password) {
-  // Simple hash for debugging - replace with bcrypt later
-  return 'hashed_' + password;
+  // Simple but consistent hashing for development
+  return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 function comparePassword(password, hashedPassword) {
   if (!password || !hashedPassword) return false;
-  return hashedPassword === 'hashed_' + password;
+  const hashedInput = crypto.createHash('sha256').update(password).digest('hex');
+  return hashedInput === hashedPassword;
 }
 
 // Validation utilities

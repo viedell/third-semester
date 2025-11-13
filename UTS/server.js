@@ -14,24 +14,35 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Enhanced Session middleware
+// Simple Memory Session Store (since file storage might not work on Vercel)
+const MemoryStore = session.MemoryStore;
+
+// Session middleware with proper configuration
 app.use(session({
   name: 'techstore.sid',
-  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-2024-change-in-production',
+  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-key-2024-very-long-secret',
   resave: false,
   saveUninitialized: false,
+  store: new MemoryStore(),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Set to true in production with HTTPS
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     sameSite: 'lax'
   }
 }));
 
-// Make user available in all routes
+// Make user available in all routes and views
 app.use((req, res, next) => {
+  console.log('🔐 Session Check - User:', req.session.user ? req.session.user.email : 'No user');
+  console.log('🔐 Session ID:', req.sessionID);
   res.locals.user = req.session.user || null;
-  console.log('Session user:', req.session.user ? req.session.user.email : 'No user');
+  next();
+});
+
+// Debug middleware to see all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
