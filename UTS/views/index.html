@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusBite | Futuristic Food Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>NexusBite</span>
+            </div>
+            <div class="cart-icon" id="cartIcon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Future of Food Delivery</h1>
+        <p>Experience the next generation of culinary excellence with our curated selection of futuristic foods</p>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for meals, ingredients, or cuisines...">
+            <button onclick="searchProducts()"><i class="fas fa-search"></i> Search</button>
+        </div>
+    </section>
+
+    <section class="categories">
+        <h2>Categories</h2>
+        <div class="category-list" id="categoryList">
+            <!-- Categories will be loaded dynamically -->
+        </div>
+    </section>
+
+    <section class="products">
+        <h2>Featured Products</h2>
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded dynamically -->
+        </div>
+    </section>
+
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-header">
+            <h2>Your Cart</h2>
+            <button class="close-cart" id="closeCart"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Cart items will be loaded dynamically -->
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>NexusBite</h3>
+                <p>The future of food is here. Experience culinary innovation with our curated selection of futuristic foods.</p>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/cart">Cart</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>API</h3>
+                <ul>
+                    <li><a href="/api/products">Products API</a></li>
+                    <li><a href="/api/orders">Orders API</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2023 NexusBite. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
