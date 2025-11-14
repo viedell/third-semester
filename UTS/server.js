@@ -9,7 +9,9 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Data file paths
 const dataDir = path.join(__dirname, 'data');
@@ -118,25 +120,15 @@ initializeDataFiles();
 
 // ==================== PUBLIC WEBSITE ROUTES (HTML) ====================
 
-// Home page
+// Serve HTML files from views directory
 app.get('/', (req, res) => {
-    const products = readJSON(productsFile);
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// Product detail page
 app.get('/product/:id', (req, res) => {
-    const products = readJSON(productsFile);
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    
-    if (!product) {
-        return res.status(404).send('Product not found');
-    }
-    
     res.sendFile(path.join(__dirname, 'views', 'product.html'));
 });
 
-// Cart page
 app.get('/cart', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'cart.html'));
 });
