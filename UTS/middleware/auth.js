@@ -1,7 +1,11 @@
 function requireAuth(req, res, next) {
   if (!req.session.user) {
-    if (req.headers['content-type'] === 'application/json') {
-      return res.status(401).json({ error: 'Please login to continue' });
+    if (req.headers['content-type'] === 'application/json' || 
+        req.path.startsWith('/api/')) {
+      return res.status(401).json({ 
+        error: 'Please login to continue',
+        requiresAuth: true 
+      });
     }
     return res.redirect('/auth/login?redirect=' + encodeURIComponent(req.originalUrl));
   }
