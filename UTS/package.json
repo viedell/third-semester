@@ -1,7 +1,7 @@
 {
   "name": "techstore-ecommerce",
   "version": "1.0.0",
-  "description": "Futuristic Tech E-commerce",
+  "description": "Futuristic Tech E-commerce with Vercel MongoDB",
   "main": "api/index.js",
   "scripts": {
     "start": "node api/index.js",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "express-session": "^1.17.3"
+    "express-session": "^1.17.3",
+    "mongodb": "^5.8.1"
   },
   "engines": {
     "node": ">=14.0.0"

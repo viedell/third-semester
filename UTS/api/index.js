@@ -7,8 +7,8 @@ const {
   findProductById, 
   getCart, 
   updateCart,
-  initializeMemoryStore
-} = require('../utils/database');
+  initializeDatabase
+} = require('../utils/mongodb');
 const { 
   hashPassword, 
   comparePassword, 
@@ -20,21 +20,23 @@ const {
 
 const app = express();
 
-// Initialize memory store
-initializeMemoryStore();
+// Initialize MongoDB database
+initializeDatabase().then(() => {
+  console.log('🚀 MongoDB initialized and ready');
+}).catch(error => {
+  console.error('❌ MongoDB initialization failed:', error.message);
+});
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware with default MemoryStore (Vercel compatible)
-// Note: This will show the warning but it's fine for demo purposes
+// Session middleware with MemoryStore (works on Vercel)
 app.use(session({
   name: 'techstore.sid',
-  secret: process.env.SESSION_SECRET || 'techstore-memory-store-secret-2024',
+  secret: process.env.SESSION_SECRET || 'techstore-mongodb-secret-2024',
   resave: false,
   saveUninitialized: false,
-  // Using default MemoryStore - it shows a warning but works for Vercel
   cookie: {
     secure: true, // Vercel uses HTTPS
     httpOnly: true,
@@ -63,7 +65,7 @@ function renderView(res, viewFunction, data = {}) {
 app.get('/', async (req, res) => {
   try {
     const products = await getProducts();
-    const featuredProducts = products.slice(0, 6);
+    const featuredProducts = products.slice(0, 8); // Show 8 featured products
     
     const homeView = require('../views/home');
     renderView(res, homeView, { 
@@ -71,7 +73,7 @@ app.get('/', async (req, res) => {
       user: req.session.user 
     });
   } catch (error) {
-    console.error('Home page error:', error);
+    console.error('Home page error:', error.message);
     const homeView = require('../views/home');
     renderView(res, homeView, { 
       featuredProducts: [], 
@@ -106,7 +108,7 @@ app.get('/products', async (req, res) => {
       user: req.session.user 
     });
   } catch (error) {
-    console.error('Products page error:', error);
+    console.error('Products page error:', error.message);
     const productsView = require('../views/products');
     renderView(res, productsView, { 
       products: [], 
@@ -131,7 +133,7 @@ app.get('/products/:id', async (req, res) => {
       user: req.session.user 
     });
   } catch (error) {
-    console.error('Product page error:', error);
+    console.error('Product page error:', error.message);
     res.status(500).send('Server error');
   }
 });
@@ -172,7 +174,7 @@ app.post('/auth/login', async (req, res) => {
     }
 
     const user = await findUserByEmail(email);
-    console.log('👤 User found:', user ? 'YES' : 'NO');
+    console.log('👤 MongoDB user found:', user ? 'YES' : 'NO');
     
     if (!user) {
       const loginView = require('../views/login');
@@ -196,11 +198,11 @@ app.post('/auth/login', async (req, res) => {
     }
 
     req.session.user = sanitizeUser(user);
-    console.log('✅ LOGIN SUCCESSFUL');
+    console.log('✅ LOGIN SUCCESSFUL - MongoDB');
     res.redirect(redirect);
     
   } catch (error) {
-    console.error('💥 LOGIN ERROR:', error);
+    console.error('💥 LOGIN ERROR:', error.message);
     const loginView = require('../views/login');
     renderView(res, loginView, { 
       redirect: req.body.redirect || '/', 
@@ -268,16 +270,16 @@ app.post('/auth/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    console.log('💾 Creating user in memory store...');
+    console.log('💾 Creating user in MongoDB...');
     await createUser(newUser);
-    console.log('✅ User created successfully');
+    console.log('✅ User created successfully in MongoDB');
 
     req.session.user = sanitizeUser(newUser);
-    console.log('✅ REGISTRATION COMPLETE');
+    console.log('✅ REGISTRATION COMPLETE - MongoDB');
     res.redirect('/profile');
     
   } catch (error) {
-    console.error('💥 REGISTRATION ERROR:', error);
+    console.error('💥 REGISTRATION ERROR:', error.message);
     const registerView = require('../views/register');
     renderView(res, registerView, { 
       error: 'Registration failed. Please try again.',
@@ -328,7 +330,7 @@ app.get('/orders', requireAuth, async (req, res) => {
       user: req.session.user 
     });
   } catch (error) {
-    console.error('Orders page error:', error);
+    console.error('Orders page error:', error.message);
     const ordersView = require('../views/orders');
     renderView(res, ordersView, { 
       orders: [],
@@ -343,6 +345,7 @@ app.get('/api/products', async (req, res) => {
     const products = await getProducts();
     res.json(products);
   } catch (error) {
+    console.error('API Products error:', error.message);
     res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
@@ -350,7 +353,7 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/cart', requireAuth, async (req, res) => {
   try {
     const cart = await getCart(req.session.user.id);
-    const cartItems = cart.items || [];
+    const cartItems = cart ? cart.items : [];
     
     const products = await getProducts();
     const cartWithDetails = cartItems.map(item => {
@@ -360,6 +363,7 @@ app.get('/api/cart', requireAuth, async (req, res) => {
     
     res.json(cartWithDetails);
   } catch (error) {
+    console.error('API Cart error:', error.message);
     res.status(500).json({ error: 'Failed to fetch cart' });
   }
 });
@@ -379,7 +383,7 @@ app.post('/api/cart', requireAuth, async (req, res) => {
     
     const userId = req.session.user.id;
     let cart = await getCart(userId);
-    let userCart = cart.items || [];
+    let userCart = cart ? cart.items : [];
     
     const existingItem = userCart.find(item => item.productId === parseInt(productId));
     
@@ -396,6 +400,7 @@ app.post('/api/cart', requireAuth, async (req, res) => {
     await updateCart(userId, userCart);
     res.json({ success: true, cart: userCart });
   } catch (error) {
+    console.error('API Add to Cart error:', error.message);
     res.status(500).json({ error: 'Failed to add to cart' });
   }
 });
@@ -407,7 +412,7 @@ app.put('/api/cart/:productId', requireAuth, async (req, res) => {
     
     const userId = req.session.user.id;
     let cart = await getCart(userId);
-    let userCart = cart.items || [];
+    let userCart = cart ? cart.items : [];
     
     const item = userCart.find(item => item.productId === parseInt(productId));
     
@@ -424,6 +429,7 @@ app.put('/api/cart/:productId', requireAuth, async (req, res) => {
     await updateCart(userId, userCart);
     res.json({ success: true });
   } catch (error) {
+    console.error('API Update Cart error:', error.message);
     res.status(500).json({ error: 'Failed to update cart' });
   }
 });
@@ -434,13 +440,14 @@ app.delete('/api/cart/:productId', requireAuth, async (req, res) => {
     const userId = req.session.user.id;
     
     let cart = await getCart(userId);
-    let userCart = cart.items || [];
+    let userCart = cart ? cart.items : [];
     
     userCart = userCart.filter(item => item.productId !== parseInt(productId));
     await updateCart(userId, userCart);
     
     res.json({ success: true });
   } catch (error) {
+    console.error('API Remove from Cart error:', error.message);
     res.status(500).json({ error: 'Failed to remove from cart' });
   }
 });
