@@ -1,6 +1,15 @@
 const express = require('express');
 const session = require('express-session');
-const { MongoClient } = require('mongodb');
+const { 
+  findUserByEmail, 
+  createUser, 
+  getProducts, 
+  findProductById, 
+  getCart, 
+  updateCart,
+  memorySessionStore,
+  initializeMemoryStore
+} = require('../utils/database');
 const { 
   hashPassword, 
   comparePassword, 
@@ -12,92 +21,20 @@ const {
 
 const app = express();
 
-// MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = 'techstore';
-
-let cachedDb = null;
-
-async function connectToDatabase() {
-  if (cachedDb) {
-    return cachedDb;
-  }
-
-  try {
-    const client = await MongoClient.connect(MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    const db = client.db(DB_NAME);
-    cachedDb = db;
-    
-    console.log('✅ Connected to MongoDB Atlas');
-    return db;
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    throw error;
-  }
-}
-
-// Database functions
-async function findUserByEmail(email) {
-  const db = await connectToDatabase();
-  return await db.collection('users').findOne({ email: email.toLowerCase().trim() });
-}
-
-async function createUser(user) {
-  const db = await connectToDatabase();
-  const result = await db.collection('users').insertOne(user);
-  return result.insertedId;
-}
-
-async function getProducts() {
-  const db = await connectToDatabase();
-  return await db.collection('products').find({}).toArray();
-}
-
-async function findProductById(id) {
-  const db = await connectToDatabase();
-  return await db.collection('products').findOne({ id: parseInt(id) });
-}
-
-async function getCart(userId) {
-  const db = await connectToDatabase();
-  return await db.collection('carts').findOne({ userId: parseInt(userId) });
-}
-
-async function updateCart(userId, items) {
-  const db = await connectToDatabase();
-  return await db.collection('carts').updateOne(
-    { userId: parseInt(userId) },
-    { 
-      $set: { 
-        items: items, 
-        updatedAt: new Date() 
-      } 
-    },
-    { upsert: true }
-  );
-}
-
-// Session store using MongoDB (fixes MemoryStore warning)
-const MongoStore = require('connect-mongo');
+// Initialize memory store
+initializeMemoryStore();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware with MongoDB store
+// Session middleware with memory store (Vercel compatible)
 app.use(session({
   name: 'techstore.sid',
-  secret: process.env.SESSION_SECRET || 'techstore-secret-key',
+  secret: process.env.SESSION_SECRET || 'techstore-memory-store-secret-2024',
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: MONGODB_URI,
-    dbName: DB_NAME,
-    collectionName: 'sessions'
-  }),
+  store: memorySessionStore,
   cookie: {
     secure: true, // Vercel uses HTTPS
     httpOnly: true,
@@ -223,6 +160,8 @@ app.post('/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const redirect = req.body.redirect || '/';
     
+    console.log('🔑 LOGIN ATTEMPT:', { email });
+    
     if (!email || !password) {
       const loginView = require('../views/login');
       return renderView(res, loginView, { 
@@ -233,8 +172,21 @@ app.post('/auth/login', async (req, res) => {
     }
 
     const user = await findUserByEmail(email);
+    console.log('👤 User found:', user ? 'YES' : 'NO');
     
-    if (!user || !comparePassword(password, user.password)) {
+    if (!user) {
+      const loginView = require('../views/login');
+      return renderView(res, loginView, { 
+        redirect, 
+        error: 'Invalid email or password',
+        user: req.session.user 
+      });
+    }
+
+    const isPasswordValid = comparePassword(password, user.password);
+    console.log('✅ Password valid:', isPasswordValid);
+
+    if (!isPasswordValid) {
       const loginView = require('../views/login');
       return renderView(res, loginView, { 
         redirect, 
@@ -244,10 +196,11 @@ app.post('/auth/login', async (req, res) => {
     }
 
     req.session.user = sanitizeUser(user);
+    console.log('✅ LOGIN SUCCESSFUL - Memory Store');
     res.redirect(redirect);
     
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('💥 LOGIN ERROR:', error);
     const loginView = require('../views/login');
     renderView(res, loginView, { 
       redirect: req.body.redirect || '/', 
@@ -260,6 +213,8 @@ app.post('/auth/login', async (req, res) => {
 app.post('/auth/register', async (req, res) => {
   try {
     const { email, password, confirmPassword } = req.body;
+    
+    console.log('📝 REGISTRATION ATTEMPT:', { email });
     
     if (!email || !password || !confirmPassword) {
       const registerView = require('../views/register');
@@ -313,12 +268,16 @@ app.post('/auth/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
+    console.log('💾 Creating user in memory store...');
     await createUser(newUser);
+    console.log('✅ User created successfully');
+
     req.session.user = sanitizeUser(newUser);
+    console.log('✅ REGISTRATION COMPLETE - Memory Store');
     res.redirect('/profile');
     
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('💥 REGISTRATION ERROR:', error);
     const registerView = require('../views/register');
     renderView(res, registerView, { 
       error: 'Registration failed. Please try again.',
@@ -328,6 +287,7 @@ app.post('/auth/register', async (req, res) => {
 });
 
 app.get('/auth/logout', (req, res) => {
+  console.log('🚪 LOGOUT:', req.session.user?.email);
   req.session.destroy((err) => {
     if (err) {
       console.error('Logout error:', err);
@@ -362,7 +322,6 @@ app.get('/cart', requireAuth, (req, res) => {
 
 app.get('/orders', requireAuth, async (req, res) => {
   try {
-    // For now, return empty orders - you can implement this later
     const ordersView = require('../views/orders');
     renderView(res, ordersView, { 
       orders: [],
@@ -391,7 +350,7 @@ app.get('/api/products', async (req, res) => {
 app.get('/api/cart', requireAuth, async (req, res) => {
   try {
     const cart = await getCart(req.session.user.id);
-    const cartItems = cart ? cart.items : [];
+    const cartItems = cart.items || [];
     
     const products = await getProducts();
     const cartWithDetails = cartItems.map(item => {
@@ -420,7 +379,7 @@ app.post('/api/cart', requireAuth, async (req, res) => {
     
     const userId = req.session.user.id;
     let cart = await getCart(userId);
-    let userCart = cart ? cart.items : [];
+    let userCart = cart.items || [];
     
     const existingItem = userCart.find(item => item.productId === parseInt(productId));
     
@@ -441,49 +400,50 @@ app.post('/api/cart', requireAuth, async (req, res) => {
   }
 });
 
-// Initialize products on first run
-async function initializeProducts() {
+app.put('/api/cart/:productId', requireAuth, async (req, res) => {
   try {
-    const db = await connectToDatabase();
-    const productCount = await db.collection('products').countDocuments();
+    const { productId } = req.params;
+    const { quantity } = req.body;
     
-    if (productCount === 0) {
-      console.log('📦 Initializing products...');
-      await db.collection('products').insertMany([
-        {
-          id: 1,
-          name: 'Quantum Laptop Pro',
-          price: 1999.99,
-          stock: 8,
-          description: 'Next-gen quantum computing laptop with neural processor',
-          category: 'Electronics',
-          imageUrl: 'https://images.unsplash.com/photo-1603302576837-37561b2e2302?w=500&h=400&fit=crop',
-          rating: 4.9,
-          reviews: 156,
-          features: ['Quantum CPU', '32GB RAM', '2TB SSD']
-        },
-        {
-          id: 2,
-          name: 'Neural Mouse X',
-          price: 129.99,
-          stock: 25,
-          description: 'AI-enhanced mouse with predictive cursor technology',
-          category: 'Accessories',
-          imageUrl: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&h=400&fit=crop',
-          rating: 4.7,
-          reviews: 89,
-          features: ['AI Prediction', '10K DPI', 'Wireless Charging']
-        }
-      ]);
-      console.log('✅ Products initialized');
+    const userId = req.session.user.id;
+    let cart = await getCart(userId);
+    let userCart = cart.items || [];
+    
+    const item = userCart.find(item => item.productId === parseInt(productId));
+    
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found in cart' });
     }
+    
+    if (quantity <= 0) {
+      userCart = userCart.filter(item => item.productId !== parseInt(productId));
+    } else {
+      item.quantity = parseInt(quantity);
+    }
+    
+    await updateCart(userId, userCart);
+    res.json({ success: true });
   } catch (error) {
-    console.error('❌ Product initialization failed:', error);
+    res.status(500).json({ error: 'Failed to update cart' });
   }
-}
+});
+
+app.delete('/api/cart/:productId', requireAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.session.user.id;
+    
+    let cart = await getCart(userId);
+    let userCart = cart.items || [];
+    
+    userCart = userCart.filter(item => item.productId !== parseInt(productId));
+    await updateCart(userId, userCart);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove from cart' });
+  }
+});
 
 // Export the Express app for Vercel
 module.exports = app;
-
-// Initialize products when the function starts
-initializeProducts().catch(console.error);
