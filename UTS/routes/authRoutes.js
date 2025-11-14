@@ -1,173 +1,126 @@
 const express = require('express');
-const { 
-  hashPassword, 
-  comparePassword, 
-  isValidEmail, 
-  isValidPassword, 
-  sanitizeUser,
-  generateId 
-} = require('../utils/helpers');
-const { requireGuest } = require('../middleware/auth');
-const loginView = require('../views/login');
-const registerView = require('../views/register');
-const { findUserByEmail, createUser } = require('../utils/database');
-
 const router = express.Router();
+const { getDB } = require('../config/database');
+const { hashPassword, comparePassword, validateEmail, validatePassword } = require('../utils/helpers');
+const { requireGuest } = require('../middleware/auth');
+const { loginView } = require('../views/login');
+const { registerView } = require('../views/register');
 
-// Login page
+// Show login page
 router.get('/login', requireGuest, (req, res) => {
   const redirect = req.query.redirect || '/';
-  res.send(loginView({ redirect, error: null, user: req.session.user }));
+  res.send(loginView(null, redirect));
 });
 
-// Register page
-router.get('/register', requireGuest, (req, res) => {
-  res.send(registerView({ error: null, user: req.session.user }));
-});
-
-// Login handler with MongoDB
+// Handle login
 router.post('/login', requireGuest, async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const redirect = req.body.redirect || '/';
-    
-    console.log('🔑 LOGIN ATTEMPT:', { email });
-    
+    const { email, password, redirect = '/' } = req.body;
+
+    // Validate input
     if (!email || !password) {
-      return res.send(loginView({ 
-        redirect, 
-        error: 'Email and password are required',
-        user: req.session.user 
-      }));
+      return res.send(loginView('Please provide email and password', redirect));
     }
 
-    // Find user in MongoDB
-    const user = await findUserByEmail(email);
-    console.log('👤 Database user found:', user ? 'YES' : 'NO');
-    
+    if (!validateEmail(email)) {
+      return res.send(loginView('Invalid email format', redirect));
+    }
+
+    const db = getDB();
+    const user = await db.collection('users').findOne({ email: email.toLowerCase() });
+
     if (!user) {
-      return res.send(loginView({ 
-        redirect, 
-        error: 'Invalid email or password',
-        user: req.session.user 
-      }));
+      return res.send(loginView('Invalid email or password', redirect));
     }
 
-    // Compare password
-    const isPasswordValid = comparePassword(password, user.password);
-    console.log('✅ Password valid:', isPasswordValid);
-
-    if (!isPasswordValid) {
-      return res.send(loginView({ 
-        redirect, 
-        error: 'Invalid email or password',
-        user: req.session.user 
-      }));
+    const isValid = await comparePassword(password, user.password);
+    if (!isValid) {
+      return res.send(loginView('Invalid email or password', redirect));
     }
 
     // Set session
-    const sanitizedUser = sanitizeUser(user);
-    req.session.user = sanitizedUser;
-    
-    console.log('✅ LOGIN SUCCESSFUL - MongoDB');
+    req.session.user = {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt
+    };
+
     res.redirect(redirect);
-    
   } catch (error) {
-    console.error('💥 LOGIN ERROR:', error);
-    res.send(loginView({ 
-      redirect: req.body.redirect || '/', 
-      error: 'Server error during login',
-      user: req.session.user 
-    }));
+    console.error('Login error:', error);
+    res.send(loginView('An error occurred. Please try again.'));
   }
 });
 
-// Register handler with MongoDB
+// Show register page
+router.get('/register', requireGuest, (req, res) => {
+  res.send(registerView());
+});
+
+// Handle registration
 router.post('/register', requireGuest, async (req, res) => {
   try {
-    const { email, password, confirmPassword } = req.body;
-    
-    console.log('📝 REGISTRATION ATTEMPT:', { email });
-    
-    // Validation
-    if (!email || !password || !confirmPassword) {
-      return res.send(registerView({ 
-        error: 'All fields are required',
-        user: req.session.user 
-      }));
+    const { name, email, password, confirmPassword } = req.body;
+
+    // Validate input
+    if (!name || !email || !password || !confirmPassword) {
+      return res.send(registerView('All fields are required'));
     }
 
-    if (!isValidEmail(email)) {
-      return res.send(registerView({ 
-        error: 'Please enter a valid email address',
-        user: req.session.user 
-      }));
+    if (!validateEmail(email)) {
+      return res.send(registerView('Invalid email format'));
     }
 
-    if (!isValidPassword(password)) {
-      return res.send(registerView({ 
-        error: 'Password must be at least 6 characters long',
-        user: req.session.user 
-      }));
+    if (!validatePassword(password)) {
+      return res.send(registerView('Password must be at least 6 characters'));
     }
 
     if (password !== confirmPassword) {
-      return res.send(registerView({ 
-        error: 'Passwords do not match',
-        user: req.session.user 
-      }));
+      return res.send(registerView('Passwords do not match'));
     }
 
-    // Check if user already exists in MongoDB
-    const existingUser = await findUserByEmail(email);
+    const db = getDB();
+
+    // Check if user exists
+    const existingUser = await db.collection('users').findOne({ 
+      email: email.toLowerCase() 
+    });
+
     if (existingUser) {
-      return res.send(registerView({ 
-        error: 'User with this email already exists',
-        user: req.session.user 
-      }));
+      return res.send(registerView('Email already registered'));
     }
 
-    // Create new user
-    const emailUsername = email.split('@')[0];
-    const name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
-    
+    // Create user
+    const hashedPassword = await hashPassword(password);
     const newUser = {
-      id: generateId(),
-      name: name,
-      email: email.toLowerCase().trim(),
-      password: hashPassword(password),
-      createdAt: new Date().toISOString()
+      name: name.trim(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      createdAt: new Date()
     };
 
-    console.log('💾 Saving user to MongoDB...');
-    await createUser(newUser);
-    console.log('✅ User saved to MongoDB');
+    const result = await db.collection('users').insertOne(newUser);
 
-    // Auto-login
-    const sanitizedUser = sanitizeUser(newUser);
-    req.session.user = sanitizedUser;
-    
-    console.log('✅ REGISTRATION COMPLETE - MongoDB');
-    res.redirect('/profile');
-    
+    // Set session
+    req.session.user = {
+      id: result.insertedId.toString(),
+      email: newUser.email,
+      name: newUser.name,
+      createdAt: newUser.createdAt
+    };
+
+    res.redirect('/');
   } catch (error) {
-    console.error('💥 REGISTRATION ERROR:', error);
-    res.send(registerView({ 
-      error: 'Registration failed: ' + error.message,
-      user: req.session.user 
-    }));
+    console.error('Registration error:', error);
+    res.send(registerView('An error occurred. Please try again.'));
   }
 });
 
-// Logout handler
+// Logout
 router.get('/logout', (req, res) => {
-  console.log('🚪 LOGOUT:', req.session.user?.email);
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-    }
-    res.redirect('/');
-  });
+  req.session.destroy();
+  res.redirect('/');
 });
 
 module.exports = router;

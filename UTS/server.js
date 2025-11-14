@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const path = require('path');
+const MongoStore = require('connect-mongo');
+const { connectDB } = require('./config/database');
 const publicRoutes = require('./routes/publicRoutes');
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
-const { initializeDatabase } = require('./utils/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,19 +13,20 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Session middleware
+// Session middleware with MongoDB store
 app.use(session({
-  name: 'techstore.sid',
-  secret: process.env.SESSION_SECRET || 'techstore-mongodb-secret-key-2024',
+  secret: process.env.SESSION_SECRET || 'techstore-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    touchAfter: 24 * 3600 // lazy session update
+  }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: 'lax'
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
 
@@ -39,23 +41,21 @@ app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 
-// Initialize database and start server
-initializeDatabase().then(() => {
+// Connect to MongoDB and start server
+connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║                🚀 TECHSTORE SERVER READY                  ║
+║            TECHSTORE E-COMMERCE SERVER                     ║
 ╠════════════════════════════════════════════════════════════╣
-║  Server: http://localhost:${PORT}                            ║
-║  Database: ✅ MongoDB Atlas Connected                    ║
-║  Storage: 🎯 Persistent Real-time Data                   ║
-║  Environment: ${process.env.NODE_ENV || 'development'}       ║
-║                                                            ║
-║  ✅ User Accounts Persist                                 ║
-║  ✅ Shopping Cart Saved                                   ║
-║  ✅ Order History Stored                                  ║
-║  ✅ Real Database Backend                                 ║
+║  🚀 Server: http://localhost:${PORT}                          ║
+║  ✅ MongoDB Connected                                       ║
+║  ✅ Authentication System Active                            ║
+║  ✅ Session Store: MongoDB                                  ║
 ╚════════════════════════════════════════════════════════════╝
     `);
   });
-}).catch(console.error);
+}).catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
