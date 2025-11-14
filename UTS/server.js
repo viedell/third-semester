@@ -19,104 +19,111 @@ const usersFile = path.join(dataDir, 'users.json');
 const productsFile = path.join(dataDir, 'products.json');
 const ordersFile = path.join(dataDir, 'orders.json');
 
-// Initialize data files if they don't exist
-function initializeDataFiles() {
-    if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir);
-    }
+// In-memory data storage (for Vercel)
+let memoryData = {
+    products: [],
+    users: [],
+    orders: []
+};
 
-    if (!fs.existsSync(usersFile)) {
-        fs.writeFileSync(usersFile, JSON.stringify([], null, 2));
-    }
+// Initialize data - try to read from files, fallback to sample data
+function initializeData() {
+    // Sample products data
+    const sampleProducts = [
+        {
+            id: 1,
+            name: "Quantum Protein Bar",
+            description: "Advanced nutrition with quantum-infused proteins for maximum absorption.",
+            price: 4.99,
+            image: "https://images.unsplash.com/photo-1628149332400-91e4cac814d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "Protein Meals",
+            stock: 50
+        },
+        {
+            id: 2,
+            name: "Neo Vegan Burger",
+            description: "Plant-based patty with lab-grown flavors that mimic authentic meat.",
+            price: 12.99,
+            image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "Vegan Future",
+            stock: 30
+        },
+        {
+            id: 3,
+            name: "Smart Energy Drink",
+            description: "Cognitive-enhancing beverage with nootropics for mental clarity.",
+            price: 3.49,
+            image: "https://images.unsplash.com/photo-1599031628962-8d927fc56e35?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "Smart Drinks",
+            stock: 100
+        },
+        {
+            id: 4,
+            name: "3D Printed Pizza",
+            description: "Customizable nutrition with personalized 3D-printed ingredients.",
+            price: 16.99,
+            image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "3D Printed",
+            stock: 20
+        },
+        {
+            id: 5,
+            name: "Lab-Grown Steak",
+            description: "Ethically produced cultured meat with authentic texture and taste.",
+            price: 24.99,
+            image: "https://images.unsplash.com/photo-1588347818122-c6b08c2c9c8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "Lab-Grown",
+            stock: 15
+        },
+        {
+            id: 6,
+            name: "Nootropic Smoothie",
+            description: "Brain-boosting blend with adaptogens and superfoods.",
+            price: 6.99,
+            image: "https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+            category: "Nootropic Foods",
+            stock: 40
+        }
+    ];
 
-    if (!fs.existsSync(productsFile)) {
-        const initialProducts = [
-            {
-                id: 1,
-                name: "Quantum Protein Bar",
-                description: "Advanced nutrition with quantum-infused proteins for maximum absorption.",
-                price: 4.99,
-                image: "https://images.unsplash.com/photo-1628149332400-91e4cac814d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "Protein Meals",
-                stock: 50
-            },
-            {
-                id: 2,
-                name: "Neo Vegan Burger",
-                description: "Plant-based patty with lab-grown flavors that mimic authentic meat.",
-                price: 12.99,
-                image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "Vegan Future",
-                stock: 30
-            },
-            {
-                id: 3,
-                name: "Smart Energy Drink",
-                description: "Cognitive-enhancing beverage with nootropics for mental clarity.",
-                price: 3.49,
-                image: "https://images.unsplash.com/photo-1599031628962-8d927fc56e35?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "Smart Drinks",
-                stock: 100
-            },
-            {
-                id: 4,
-                name: "3D Printed Pizza",
-                description: "Customizable nutrition with personalized 3D-printed ingredients.",
-                price: 16.99,
-                image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "3D Printed",
-                stock: 20
-            },
-            {
-                id: 5,
-                name: "Lab-Grown Steak",
-                description: "Ethically produced cultured meat with authentic texture and taste.",
-                price: 24.99,
-                image: "https://images.unsplash.com/photo-1588347818122-c6b08c2c9c8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "Lab-Grown",
-                stock: 15
-            },
-            {
-                id: 6,
-                name: "Nootropic Smoothie",
-                description: "Brain-boosting blend with adaptogens and superfoods.",
-                price: 6.99,
-                image: "https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                category: "Nootropic Foods",
-                stock: 40
+    // Try to read from files in development, use sample data in production
+    if (process.env.NODE_ENV === 'development' && fs.existsSync(productsFile)) {
+        try {
+            memoryData.products = JSON.parse(fs.readFileSync(productsFile, 'utf8'));
+            memoryData.users = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+            memoryData.orders = JSON.parse(fs.readFileSync(ordersFile, 'utf8'));
+            console.log('Data loaded from files');
+        } catch (error) {
+            console.log('Error reading data files, using sample data:', error.message);
+            memoryData.products = sampleProducts;
+        }
+    } else {
+        console.log('Using in-memory sample data');
+        memoryData.products = sampleProducts;
+    }
+}
+
+// Helper function to save data (only works in development)
+function saveData() {
+    if (process.env.NODE_ENV === 'development') {
+        try {
+            if (!fs.existsSync(dataDir)) {
+                fs.mkdirSync(dataDir);
             }
-        ];
-        fs.writeFileSync(productsFile, JSON.stringify(initialProducts, null, 2));
+            fs.writeFileSync(productsFile, JSON.stringify(memoryData.products, null, 2));
+            fs.writeFileSync(usersFile, JSON.stringify(memoryData.users, null, 2));
+            fs.writeFileSync(ordersFile, JSON.stringify(memoryData.orders, null, 2));
+            return true;
+        } catch (error) {
+            console.error('Error saving data (development only):', error.message);
+            return false;
+        }
     }
-
-    if (!fs.existsSync(ordersFile)) {
-        fs.writeFileSync(ordersFile, JSON.stringify([], null, 2));
-    }
+    return true; // In production, we just return true since we can't save
 }
 
-// Helper functions to read/write JSON files
-function readJSON(filePath) {
-    try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`Error reading ${filePath}:`, error);
-        return [];
-    }
-}
-
-function writeJSON(filePath, data) {
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error(`Error writing to ${filePath}:`, error);
-        return false;
-    }
-}
-
-// Initialize data files
-initializeDataFiles();
+// Initialize data
+initializeData();
 
 // ==================== PUBLIC WEBSITE ROUTES (HTML) ====================
 
@@ -138,9 +145,8 @@ app.get('/cart', (req, res) => {
 // Products API
 app.get('/api/products', (req, res) => {
     try {
-        const products = readJSON(productsFile);
-        console.log('Sending products:', products.length);
-        res.json(products);
+        console.log('Sending products:', memoryData.products.length);
+        res.json(memoryData.products);
     } catch (error) {
         console.error('Error in /api/products:', error);
         res.status(500).json({ error: 'Failed to load products' });
@@ -149,8 +155,7 @@ app.get('/api/products', (req, res) => {
 
 app.get('/api/products/:id', (req, res) => {
     try {
-        const products = readJSON(productsFile);
-        const product = products.find(p => p.id === parseInt(req.params.id));
+        const product = memoryData.products.find(p => p.id === parseInt(req.params.id));
         
         if (!product) {
             return res.status(404).json({ error: 'Product not found' });
@@ -165,43 +170,34 @@ app.get('/api/products/:id', (req, res) => {
 
 // Users API
 app.get('/api/users', (req, res) => {
-    const users = readJSON(usersFile);
-    res.json(users);
+    res.json(memoryData.users);
 });
 
 app.post('/api/users', (req, res) => {
-    const users = readJSON(usersFile);
     const newUser = {
-        id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+        id: memoryData.users.length > 0 ? Math.max(...memoryData.users.map(u => u.id)) + 1 : 1,
         ...req.body,
         createdAt: new Date().toISOString()
     };
     
-    users.push(newUser);
+    memoryData.users.push(newUser);
+    saveData(); // This will only work in development
     
-    if (writeJSON(usersFile, users)) {
-        res.status(201).json(newUser);
-    } else {
-        res.status(500).json({ error: 'Failed to create user' });
-    }
+    res.status(201).json(newUser);
 });
 
 // Orders API
 app.get('/api/orders', (req, res) => {
-    const orders = readJSON(ordersFile);
-    res.json(orders);
+    res.json(memoryData.orders);
 });
 
 app.post('/api/orders', (req, res) => {
-    const orders = readJSON(ordersFile);
-    const products = readJSON(productsFile);
-    
     const { items, customerInfo } = req.body;
     
     // Validate items and calculate total
     let total = 0;
     for (const item of items) {
-        const product = products.find(p => p.id === item.productId);
+        const product = memoryData.products.find(p => p.id === item.productId);
         if (!product) {
             return res.status(400).json({ error: `Product ${item.productId} not found` });
         }
@@ -209,10 +205,13 @@ app.post('/api/orders', (req, res) => {
             return res.status(400).json({ error: `Insufficient stock for ${product.name}` });
         }
         total += product.price * item.quantity;
+        
+        // Update product stock in memory
+        product.stock -= item.quantity;
     }
     
     const newOrder = {
-        id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1,
+        id: memoryData.orders.length > 0 ? Math.max(...memoryData.orders.map(o => o.id)) + 1 : 1,
         items,
         customerInfo,
         total: parseFloat(total.toFixed(2)),
@@ -220,33 +219,21 @@ app.post('/api/orders', (req, res) => {
         createdAt: new Date().toISOString()
     };
     
-    // Update product stock
-    for (const item of items) {
-        const productIndex = products.findIndex(p => p.id === item.productId);
-        if (productIndex !== -1) {
-            products[productIndex].stock -= item.quantity;
-        }
-    }
+    memoryData.orders.push(newOrder);
+    saveData(); // This will only work in development
     
-    orders.push(newOrder);
-    
-    if (writeJSON(ordersFile, orders) && writeJSON(productsFile, products)) {
-        res.status(201).json(newOrder);
-    } else {
-        res.status(500).json({ error: 'Failed to create order' });
-    }
+    res.status(201).json(newOrder);
 });
 
 // Cart API
 app.post('/api/cart/calculate', (req, res) => {
-    const products = readJSON(productsFile);
     const { items } = req.body;
     
     let total = 0;
     const calculatedItems = [];
     
     for (const item of items) {
-        const product = products.find(p => p.id === item.productId);
+        const product = memoryData.products.find(p => p.id === item.productId);
         if (product) {
             const itemTotal = product.price * item.quantity;
             total += itemTotal;
@@ -267,13 +254,25 @@ app.post('/api/cart/calculate', (req, res) => {
 
 // Test endpoint to verify API is working
 app.get('/api/test', (req, res) => {
-    res.json({ message: 'API is working!', timestamp: new Date().toISOString() });
+    res.json({ 
+        message: 'API is working!', 
+        environment: process.env.NODE_ENV || 'production',
+        productsCount: memoryData.products.length,
+        ordersCount: memoryData.orders.length,
+        timestamp: new Date().toISOString() 
+    });
+});
+
+// Health check endpoint for Vercel
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // Start server
 app.listen(PORT, () => {
     console.log(`NexusBite Marketplace running on http://localhost:${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
     console.log(`API available at http://localhost:${PORT}/api`);
     console.log(`Test API: http://localhost:${PORT}/api/test`);
-    console.log(`Products API: http://localhost:${PORT}/api/products`);
+    console.log(`Products loaded: ${memoryData.products.length}`);
 });
