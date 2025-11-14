@@ -137,19 +137,30 @@ app.get('/cart', (req, res) => {
 
 // Products API
 app.get('/api/products', (req, res) => {
-    const products = readJSON(productsFile);
-    res.json(products);
+    try {
+        const products = readJSON(productsFile);
+        console.log('Sending products:', products.length);
+        res.json(products);
+    } catch (error) {
+        console.error('Error in /api/products:', error);
+        res.status(500).json({ error: 'Failed to load products' });
+    }
 });
 
 app.get('/api/products/:id', (req, res) => {
-    const products = readJSON(productsFile);
-    const product = products.find(p => p.id === parseInt(req.params.id));
-    
-    if (!product) {
-        return res.status(404).json({ error: 'Product not found' });
+    try {
+        const products = readJSON(productsFile);
+        const product = products.find(p => p.id === parseInt(req.params.id));
+        
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        
+        res.json(product);
+    } catch (error) {
+        console.error('Error in /api/products/:id:', error);
+        res.status(500).json({ error: 'Failed to load product' });
     }
-    
-    res.json(product);
 });
 
 // Users API
@@ -254,8 +265,15 @@ app.post('/api/cart/calculate', (req, res) => {
     });
 });
 
+// Test endpoint to verify API is working
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'API is working!', timestamp: new Date().toISOString() });
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`NexusBite Marketplace running on http://localhost:${PORT}`);
     console.log(`API available at http://localhost:${PORT}/api`);
+    console.log(`Test API: http://localhost:${PORT}/api/test`);
+    console.log(`Products API: http://localhost:${PORT}/api/products`);
 });
