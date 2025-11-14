@@ -1,18 +1,35 @@
 const express = require('express');
-const { readJSON, writeJSON } = require('../utils/fileHandler');
 const { requireAuth } = require('../middleware/auth');
+const { 
+  getProducts, 
+  findProductById, 
+  getCart, 
+  updateCart, 
+  createOrder, 
+  getOrders 
+} = require('../utils/database');
 
 const router = express.Router();
+
+// Get products
+router.get('/products', async (req, res) => {
+  try {
+    const products = await getProducts();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
 
 // Get cart
 router.get('/cart', requireAuth, async (req, res) => {
   try {
-    const carts = await readJSON('carts.json');
-    const userCart = carts[req.session.user.id] || [];
+    const cart = await getCart(req.session.user.id);
+    const cartItems = cart ? cart.items : [];
     
     // Get product details for cart items
-    const products = await readJSON('products.json');
-    const cartWithDetails = userCart.map(item => {
+    const products = await getProducts();
+    const cartWithDetails = cartItems.map(item => {
       const product = products.find(p => p.id === item.productId);
       return product ? { ...item, product } : null;
     }).filter(Boolean);
@@ -32,20 +49,14 @@ router.post('/cart', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Product ID is required' });
     }
     
-    const products = await readJSON('products.json');
-    const product = products.find(p => p.id === parseInt(productId));
-    
+    const product = await findProductById(productId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
     
-    if (product.stock < quantity) {
-      return res.status(400).json({ error: 'Insufficient stock' });
-    }
-    
-    const carts = await readJSON('carts.json');
     const userId = req.session.user.id;
-    const userCart = carts[userId] || [];
+    let cart = await getCart(userId);
+    let userCart = cart ? cart.items : [];
     
     // Check if product already in cart
     const existingItem = userCart.find(item => item.productId === parseInt(productId));
@@ -60,9 +71,7 @@ router.post('/cart', requireAuth, async (req, res) => {
       });
     }
     
-    carts[userId] = userCart;
-    await writeJSON('carts.json', carts);
-    
+    await updateCart(userId, userCart);
     res.json({ success: true, cart: userCart });
   } catch (error) {
     res.status(500).json({ error: 'Failed to add to cart' });
@@ -75,9 +84,9 @@ router.put('/cart/:productId', requireAuth, async (req, res) => {
     const { productId } = req.params;
     const { quantity } = req.body;
     
-    const carts = await readJSON('carts.json');
     const userId = req.session.user.id;
-    const userCart = carts[userId] || [];
+    let cart = await getCart(userId);
+    let userCart = cart ? cart.items : [];
     
     const item = userCart.find(item => item.productId === parseInt(productId));
     
@@ -86,13 +95,12 @@ router.put('/cart/:productId', requireAuth, async (req, res) => {
     }
     
     if (quantity <= 0) {
-      // Remove item if quantity is 0 or less
-      carts[userId] = userCart.filter(item => item.productId !== parseInt(productId));
+      userCart = userCart.filter(item => item.productId !== parseInt(productId));
     } else {
       item.quantity = parseInt(quantity);
     }
     
-    await writeJSON('carts.json', carts);
+    await updateCart(userId, userCart);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update cart' });
@@ -103,13 +111,13 @@ router.put('/cart/:productId', requireAuth, async (req, res) => {
 router.delete('/cart/:productId', requireAuth, async (req, res) => {
   try {
     const { productId } = req.params;
-    
-    const carts = await readJSON('carts.json');
     const userId = req.session.user.id;
-    const userCart = carts[userId] || [];
     
-    carts[userId] = userCart.filter(item => item.productId !== parseInt(productId));
-    await writeJSON('carts.json', carts);
+    let cart = await getCart(userId);
+    let userCart = cart ? cart.items : [];
+    
+    userCart = userCart.filter(item => item.productId !== parseInt(productId));
+    await updateCart(userId, userCart);
     
     res.json({ success: true });
   } catch (error) {
@@ -126,12 +134,10 @@ router.post('/orders', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Shipping address and payment method are required' });
     }
     
-    const carts = await readJSON('carts.json');
-    const products = await readJSON('products.json');
-    const orders = await readJSON('orders.json');
-    
     const userId = req.session.user.id;
-    const userCart = carts[userId] || [];
+    const cart = await getCart(userId);
+    const userCart = cart ? cart.items : [];
+    const products = await getProducts();
     
     if (userCart.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
@@ -161,9 +167,6 @@ router.post('/orders', requireAuth, async (req, res) => {
         quantity: item.quantity,
         imageUrl: product.imageUrl
       });
-      
-      // Update product stock
-      product.stock -= item.quantity;
     }
     
     // Create order
@@ -179,15 +182,10 @@ router.post('/orders', requireAuth, async (req, res) => {
       estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     };
     
-    orders.push(newOrder);
+    await createOrder(newOrder);
     
     // Clear user cart
-    carts[userId] = [];
-    
-    // Save all changes
-    await writeJSON('orders.json', orders);
-    await writeJSON('carts.json', carts);
-    await writeJSON('products.json', products);
+    await updateCart(userId, []);
     
     res.json({ success: true, order: newOrder });
   } catch (error) {
@@ -199,9 +197,8 @@ router.post('/orders', requireAuth, async (req, res) => {
 // Get user orders
 router.get('/orders', requireAuth, async (req, res) => {
   try {
-    const orders = await readJSON('orders.json');
-    const userOrders = orders.filter(order => order.userId === req.session.user.id);
-    res.json(userOrders);
+    const orders = await getOrders(req.session.user.id);
+    res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }

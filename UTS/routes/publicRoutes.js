@@ -1,6 +1,6 @@
 const express = require('express');
-const { readJSON } = require('../utils/fileHandler');
 const { requireAuth } = require('../middleware/auth');
+const { getProducts, getOrders } = require('../utils/database');
 const homeView = require('../views/home');
 const productsView = require('../views/products');
 const productView = require('../views/product');
@@ -13,8 +13,8 @@ const router = express.Router();
 // Home page
 router.get('/', async (req, res) => {
   try {
-    const products = await readJSON('products.json');
-    const featuredProducts = Array.isArray(products) ? products.slice(0, 6) : [];
+    const products = await getProducts();
+    const featuredProducts = products.slice(0, 6);
     res.send(homeView({ 
       featuredProducts, 
       user: req.session.user 
@@ -32,11 +32,7 @@ router.get('/', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const { category, search } = req.query;
-    let products = await readJSON('products.json');
-    
-    if (!Array.isArray(products)) {
-      products = [];
-    }
+    let products = await getProducts();
     
     if (category) {
       products = products.filter(p => p.category === category);
@@ -71,19 +67,10 @@ router.get('/products', async (req, res) => {
 // Single product page
 router.get('/products/:id', async (req, res) => {
   try {
-    const products = await readJSON('products.json');
-    const product = Array.isArray(products) ? products.find(p => p.id === parseInt(req.params.id)) : null;
+    const product = await findProductById(req.params.id);
     
     if (!product) {
-      return res.status(404).send(`
-        <html>
-          <body style="background: #0a0a0a; color: white; text-align: center; padding: 4rem; font-family: sans-serif;">
-            <h1>Product Not Found</h1>
-            <p>The product you're looking for doesn't exist.</p>
-            <a href="/products" style="color: #ff2d55;">Back to Products</a>
-          </body>
-        </html>
-      `);
+      return res.status(404).send('Product not found');
     }
     
     res.send(productView({ 
@@ -106,11 +93,9 @@ router.get('/cart', requireAuth, async (req, res) => {
 // Orders page (protected)
 router.get('/orders', requireAuth, async (req, res) => {
   try {
-    const orders = await readJSON('orders.json');
-    const userOrders = Array.isArray(orders) ? orders.filter(order => order.userId === req.session.user.id) : [];
-    
+    const orders = await getOrders(req.session.user.id);
     res.send(ordersView({ 
-      orders: userOrders,
+      orders: orders,
       user: req.session.user 
     }));
   } catch (error) {

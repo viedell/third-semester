@@ -4,7 +4,7 @@ const path = require('path');
 const publicRoutes = require('./routes/publicRoutes');
 const apiRoutes = require('./routes/apiRoutes');
 const authRoutes = require('./routes/authRoutes');
-const { initializeDataFiles } = require('./utils/fileHandler');
+const { initializeDatabase } = require('./utils/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,35 +14,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Simple Memory Session Store (since file storage might not work on Vercel)
-const MemoryStore = session.MemoryStore;
-
-// Session middleware with proper configuration
+// Session middleware
 app.use(session({
   name: 'techstore.sid',
-  secret: process.env.SESSION_SECRET || 'techstore-futuristic-red-secret-key-2024-very-long-secret',
+  secret: process.env.SESSION_SECRET || 'techstore-mongodb-secret-key-2024',
   resave: false,
   saveUninitialized: false,
-  store: new MemoryStore(),
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
     sameSite: 'lax'
   }
 }));
 
-// Make user available in all routes and views
+// Make user available in all routes
 app.use((req, res, next) => {
-  console.log('🔐 Session Check - User:', req.session.user ? req.session.user.email : 'No user');
-  console.log('🔐 Session ID:', req.sessionID);
   res.locals.user = req.session.user || null;
-  next();
-});
-
-// Debug middleware to see all requests
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -51,21 +39,22 @@ app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/api', apiRoutes);
 
-// Initialize and start server
-initializeDataFiles().then(() => {
+// Initialize database and start server
+initializeDatabase().then(() => {
   app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║                🚀 TECHSTORE SERVER READY                  ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Server: http://localhost:${PORT}                            ║
+║  Database: ✅ MongoDB Atlas Connected                    ║
+║  Storage: 🎯 Persistent Real-time Data                   ║
 ║  Environment: ${process.env.NODE_ENV || 'development'}       ║
 ║                                                            ║
-║  ✅ Authentication System                                  ║
-║  ✅ Product Catalog                                        ║
-║  ✅ Shopping Cart                                          ║
-║  ✅ Order Management                                       ║
-║  ✅ User Profiles                                          ║
+║  ✅ User Accounts Persist                                 ║
+║  ✅ Shopping Cart Saved                                   ║
+║  ✅ Order History Stored                                  ║
+║  ✅ Real Database Backend                                 ║
 ╚════════════════════════════════════════════════════════════╝
     `);
   });
