@@ -1,14 +1,12 @@
-// Hybrid database system - tries MongoDB, falls back to memory store
-
+// Memory store implementation
 let memoryStore = {
   users: [],
   products: [],
   orders: [],
-  carts: {},
-  sessions: {}
+  carts: {}
 };
 
-// Sample products for memory store
+// Sample products
 const sampleProducts = [
   {
     id: 1,
@@ -60,7 +58,7 @@ const sampleProducts = [
   }
 ];
 
-// Initialize memory store with sample data
+// Initialize memory store
 function initializeMemoryStore() {
   if (memoryStore.products.length === 0) {
     memoryStore.products = sampleProducts;
@@ -100,26 +98,6 @@ async function updateCart(userId, items) {
   return true;
 }
 
-// Simple session store for memory
-const memorySessionStore = {
-  sessions: {},
-  
-  get(sid, callback) {
-    const session = this.sessions[sid];
-    callback(null, session);
-  },
-  
-  set(sid, session, callback) {
-    this.sessions[sid] = session;
-    callback(null);
-  },
-  
-  destroy(sid, callback) {
-    delete this.sessions[sid];
-    callback(null);
-  }
-};
-
 module.exports = {
   // Database functions
   findUserByEmail,
@@ -128,9 +106,6 @@ module.exports = {
   findProductById,
   getCart,
   updateCart,
-  
-  // Session store
-  memorySessionStore,
   
   // Initialization
   initializeMemoryStore,

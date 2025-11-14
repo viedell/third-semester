@@ -7,7 +7,6 @@ const {
   findProductById, 
   getCart, 
   updateCart,
-  memorySessionStore,
   initializeMemoryStore
 } = require('../utils/database');
 const { 
@@ -28,13 +27,14 @@ initializeMemoryStore();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session middleware with memory store (Vercel compatible)
+// Session middleware with default MemoryStore (Vercel compatible)
+// Note: This will show the warning but it's fine for demo purposes
 app.use(session({
   name: 'techstore.sid',
   secret: process.env.SESSION_SECRET || 'techstore-memory-store-secret-2024',
   resave: false,
   saveUninitialized: false,
-  store: memorySessionStore,
+  // Using default MemoryStore - it shows a warning but works for Vercel
   cookie: {
     secure: true, // Vercel uses HTTPS
     httpOnly: true,
@@ -196,7 +196,7 @@ app.post('/auth/login', async (req, res) => {
     }
 
     req.session.user = sanitizeUser(user);
-    console.log('✅ LOGIN SUCCESSFUL - Memory Store');
+    console.log('✅ LOGIN SUCCESSFUL');
     res.redirect(redirect);
     
   } catch (error) {
@@ -273,7 +273,7 @@ app.post('/auth/register', async (req, res) => {
     console.log('✅ User created successfully');
 
     req.session.user = sanitizeUser(newUser);
-    console.log('✅ REGISTRATION COMPLETE - Memory Store');
+    console.log('✅ REGISTRATION COMPLETE');
     res.redirect('/profile');
     
   } catch (error) {
