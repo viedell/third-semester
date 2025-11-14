@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - NexusBite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-red: #ff2a2a;
+            --dark-red: #cc0000;
+            --light-red: #ff5c5c;
+            --dark-bg: #0a0a0a;
+            --darker-bg: #050505;
+            --card-bg: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent-glow: 0 0 10px rgba(255, 42, 42, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--darker-bg);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--primary-red);
+            box-shadow: var(--accent-glow);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-red);
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .cart-icon:hover {
+            color: var(--primary-red);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-red);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .categories-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 3rem;
+            background: linear-gradient(to right, #ffffff, var(--primary-red));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255, 42, 42, 0.3);
+            position: relative;
+        }
+
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4), var(--accent-glow);
+        }
+
+        .category-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .category-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(transparent, var(--card-bg));
+        }
+
+        .category-content {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .category-name {
+            font-size: 1.5rem;
+            color: var(--primary-red);
+            margin-bottom: 0.5rem;
+        }
+
+        .category-stats {
+            display: flex;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-description {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .category-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-tag {
+            background: rgba(255, 42, 42, 0.2);
+            color: var(--light-red);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255, 42, 42, 0.3);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-red);
+            box-shadow: var(--accent-glow);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Featured Products Section */
+        .featured-section {
+            margin-top: 4rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: var(--primary-red);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255, 42, 42, 0.2);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), var(--accent-glow);
+        }
+
+        .product-image {
+            height: 180px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            height: 40px;
+            overflow: hidden;
+        }
+
+        .product-price {
+            font-size: 1.3rem;
+            color: var(--primary-red);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .stars {
+            color: #ffd700;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--darker-bg);
+            padding: 3rem 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid var(--primary-red);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-column h3 {
+            color: var(--primary-red);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--primary-red);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 42, 42, 0.3);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-red);
+        }
+
+        @media (max-width: 768px) {
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .category-actions {
+                flex-direction: column;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>NexusBite</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/categories" style="color: var(--primary-red);">Categories</a>
+                <a href="/about">About</a>
+                <a href="/orders">My Orders</a>
+                <div class="cart-icon" id="cartIcon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="categories-container">
+        <div class="page-header">
+            <h1 class="page-title">Explore Categories</h1>
+            <p class="page-subtitle">Discover our futuristic food categories, each designed to revolutionize your culinary experience with cutting-edge technology and innovation.</p>
+        </div>
+
+        <div id="categoriesContent">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading categories...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>NexusBite</h3>
+                <p>The future of food is here. Experience culinary innovation with our curated selection of futuristic foods.</p>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/categories">Categories</a></li>
+                    <li><a href="/cart">Cart</a></li>
+                    <li><a href="/orders">My Orders</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Shipping</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2023 NexusBite. All rights reserved. | The Future of Food Delivery</p>
+        </div>
+    </footer>
+
+    <script>
+        let categories = [];
+        let products = [];
+
+        async function loadCategories() {
+            try {
+                const [categoriesResponse, productsResponse] = await Promise.all([
+                    fetch('/api/categories'),
+                    fetch('/api/products')
+                ]);
+
+                if (categoriesResponse.ok && productsResponse.ok) {
+                    categories = await categoriesResponse.json();
+                    products = await productsResponse.json();
+                    renderCategories();
+                } else {
+                    showError('Failed to load categories');
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showError('Error loading categories');
+            }
+        }
+
+        function renderCategories() {
+            const categoriesContent = document.getElementById('categoriesContent');
+            
+            const categoryData = categories.map(category => {
+                const categoryProducts = products.filter(p => p.category === category);
+                const totalProducts = categoryProducts.length;
+                const avgRating = totalProducts > 0 
+                    ? (categoryProducts.reduce((sum, p) => sum + p.rating, 0) / totalProducts).toFixed(1)
+                    : 0;
+
+                return {
+                    name: category,
+                    description: getCategoryDescription(category),
+                    image: getCategoryImage(category),
+                    totalProducts,
+                    avgRating,
+                    features: getCategoryFeatures(category),
+                    products: categoryProducts.slice(0, 3) // Show top 3 products
+                };
+            });
+
+            categoriesContent.innerHTML = `
+                <div class="categories-grid">
+                    ${categoryData.map(category => `
+                        <div class="category-card">
+                            <div class="category-image" style="background-image: url('${category.image}')"></div>
+                            <div class="category-content">
+                                <h2 class="category-name">${category.name}</h2>
+                                <div class="category-stats">
+                                    <span><i class="fas fa-box"></i> ${category.totalProducts} Products</span>
+                                    <span><i class="fas fa-star"></i> ${category.avgRating} Rating</span>
+                                </div>
+                                <p class="category-description">${category.description}</p>
+                                <div class="category-features">
+                                    ${category.features.map(feature => `
+                                        <span class="feature-tag">${feature}</span>
+                                    `).join('')}
+                                </div>
+                                <div class="category-actions">
+                                    <button class="btn btn-primary" onclick="browseCategory('${category.name}')">
+                                        <i class="fas fa-search"></i>
+                                        Browse Products
+                                    </button>
+                                    <button class="btn btn-outline" onclick="showCategoryProducts('${category.name}')">
+                                        <i class="fas fa-eye"></i>
+                                        Quick View
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="featured-section">
+                    <h2 class="section-title">Featured Products Across Categories</h2>
+                    <div class="products-grid">
+                        ${products.slice(0, 6).map(product => `
+                            <div class="product-card">
+                                <div class="product-image" style="background-image: url('${product.image}')"></div>
+                                <div class="product-info">
+                                    <h3 class="product-title">${product.name}</h3>
+                                    <p class="product-description">${product.description}</p>
+                                    <div class="product-rating">
+                                        <div class="stars">
+                                            ${'★'.repeat(Math.floor(product.rating))}${'☆'.repeat(5 - Math.floor(product.rating))}
+                                        </div>
+                                        <span>${product.rating} (${product.reviews})</span>
+                                    </div>
+                                    <div class="product-price">$${product.price.toFixed(2)}</div>
+                                    <button class="btn btn-primary" onclick="addToCart(${product.id})" style="width: 100%;">
+                                        <i class="fas fa-cart-plus"></i>
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getCategoryDescription(category) {
+            const descriptions = {
+                'Protein Meals': 'Advanced protein solutions with smart nutrient delivery systems for optimal muscle recovery and sustained energy.',
+                'Vegan Future': 'Plant-based innovations that replicate traditional flavors using cutting-edge food science and sustainable practices.',
+                'Smart Drinks': 'Cognitive-enhancing beverages with nootropics and adaptive compounds for mental performance and focus.',
+                '3D Printed': 'Customizable nutrition with 3D-printed ingredients tailored to your specific dietary needs and preferences.',
+                'Lab-Grown': 'Ethically produced cultured foods with authentic textures and flavors, revolutionizing sustainable consumption.',
+                'Nootropic Foods': 'Brain-boosting nutrition with adaptogens and superfoods for enhanced cognitive function and mental clarity.',
+                'Energy Boosters': 'Sustained energy solutions with light-activated nutrient release and advanced delivery systems.'
+            };
+            return descriptions[category] || 'Innovative food solutions powered by cutting-edge technology and sustainable practices.';
+        }
+
+        function getCategoryImage(category) {
+            const images = {
+                'Protein Meals': 'https://images.unsplash.com/photo-1576618148400-f54bed99c8d2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                'Vegan Future': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                'Smart Drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                '3D Printed': 'https://images.unsplash.com/photo-1559329007-40df8a9345d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                'Lab-Grown': 'https://images.unsplash.com/photo-1588347818122-c6b08c2c9c8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                'Nootropic Foods': 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+                'Energy Boosters': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+            };
+            return images[category] || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+        }
+
+        function getCategoryFeatures(category) {
+            const features = {
+                'Protein Meals': ['Smart Nutrients', '24hr Energy', 'Muscle Recovery'],
+                'Vegan Future': ['Plant-Based', 'Sustainable', 'Lab-Grown Flavors'],
+                'Smart Drinks': ['Nootropic', 'Focus Enhanced', 'Zero Crash'],
+                '3D Printed': ['Customizable', 'Perfect Nutrition', 'Instant Prep'],
+                'Lab-Grown': ['Ethical', 'Authentic Texture', 'Zero Cholesterol'],
+                'Nootropic Foods': ['Brain Health', 'Adaptogens', 'Antioxidants'],
+                'Energy Boosters': ['Sustained', 'Light-Activated', 'All-Day Vitality']
+            };
+            return features[category] || ['Innovative', 'Sustainable', 'Advanced'];
+        }
+
+        function browseCategory(categoryName) {
+            window.location.href = `/?category=${encodeURIComponent(categoryName)}`;
+        }
+
+        function showCategoryProducts(categoryName) {
+            const categoryProducts = products.filter(p => p.category === categoryName);
+            if (categoryProducts.length > 0) {
+                alert(`Quick view of ${categoryName}:\n\n${categoryProducts.map(p => `• ${p.name} - $${p.price.toFixed(2)}`).join('\n')}`);
+            }
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItem = cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert(`${product.name} added to cart!`);
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = totalCount;
+            }
+        }
+
+        function showError(message) {
+            const categoriesContent = document.getElementById('categoriesContent');
+            categoriesContent.innerHTML = `
+                <div class="error" style="text-align: center; padding: 4rem 2rem; color: var(--primary-red);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>${message}</h3>
+                    <p>Please try refreshing the page.</p>
+                </div>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>
