@@ -556,6 +556,32 @@
             display: block;
         }
 
+                .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-red);
+            background: rgba(255, 42, 42, 0.1);
+        }
+
+        .nav-links a[style*="color: var(--primary-red)"] {
+            background: rgba(255, 42, 42, 0.2);
+            border: 1px solid rgba(255, 42, 42, 0.5);
+        }
+        
         /* Footer */
         footer {
             background: var(--darker-bg);
