@@ -425,6 +425,10 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.get('/cart', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'cart.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`NexusBite Marketplace running on http://localhost:${PORT}`);
