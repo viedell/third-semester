@@ -1,11 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - NexusBite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-red: #ff2a2a;
+            --dark-red: #cc0000;
+            --light-red: #ff5c5c;
+            --dark-bg: #0a0a0a;
+            --darker-bg: #050505;
+            --card-bg: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent-glow: 0 0 10px rgba(255, 42, 42, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--darker-bg);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--primary-red);
+            box-shadow: var(--accent-glow);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-red);
+            background: rgba(255, 42, 42, 0.1);
+        }
+
+        .nav-links a[style*="color: var(--primary-red)"] {
+            background: rgba(255, 42, 42, 0.2);
+            border: 1px solid rgba(255, 42, 42, 0.5);
+        }
+
+        .cart-icon {
+            position: relative;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: color 0.3s;
+        }
+
+        .cart-icon:hover {
+            color: var(--primary-red);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-red);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .order-detail-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: color 0.3s;
+        }
+
+        .back-button:hover {
+            color: var(--primary-red);
+        }
+
+        .debug-section {
+            background: var(--card-bg);
+            border: 1px solid var(--primary-red);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .debug-section h3 {
+            color: var(--primary-red);
+            margin-bottom: 1rem;
+        }
+
+        .debug-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-red);
+            box-shadow: var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+        }
+
+        .order-header {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 42, 42, 0.3);
+        }
+
+        .order-title {
+            font-size: 2rem;
+            background: linear-gradient(to right, #ffffff, var(--primary-red));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .order-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .meta-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .meta-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .status-confirmed {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .order-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .order-section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 42, 42, 0.3);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-red);
+            border-bottom: 2px solid var(--primary-red);
+            padding-bottom: 0.5rem;
+        }
+
+        .items-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .order-item:hover {
+            transform: translateX(5px);
+        }
+
+        .item-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-color: var(--darker-bg);
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .price {
+            color: var(--primary-red);
+            font-weight: bold;
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: bold;
+        }
+
+        .order-summary {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-row.total {
+            border-top: 2px solid var(--primary-red);
+            border-bottom: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-red);
+            padding-top: 1rem;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary-red);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary-red);
+            border: 2px solid var(--dark-bg);
+        }
+
+        .timeline-item.active::before {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .timeline-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-content {
+            font-weight: bold;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--darker-bg);
+            padding: 3rem 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid var(--primary-red);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-column h3 {
+            color: var(--primary-red);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column ul li a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-column ul li a:hover {
+            color: var(--primary-red);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 42, 42, 0.3);
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-red);
+        }
+
+        .error {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--primary-red);
+        }
+
+        @media (max-width: 768px) {
+            .order-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .customer-info {
+                grid-template-columns: 1fr;
+            }
+
+            .order-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .item-meta {
+                justify-content: center;
+            }
+
+            .order-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+
+            .debug-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">
+                <i class="fas fa-utensils"></i>
+                <span>NexusBite</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/categories">Categories</a>
+                <a href="/about">About</a>
+                <a href="/orders">My Orders</a>
+                <div class="cart-icon" id="cartIcon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="order-detail-container">
+        <a href="/orders" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Back to Orders
+        </a>
+
+        <!-- Debug Section -->
+        <div class="debug-section">
+            <h3>Debug Tools</h3>
+            <div class="debug-actions">
+                <button class="btn btn-primary" onclick="createTestOrder()">
+                    <i class="fas fa-plus"></i>
+                    Create Test Order
+                </button>
+                <button class="btn btn-secondary" onclick="checkAllOrders()">
+                    <i class="fas fa-search"></i>
+                    Check All Orders
+                </button>
+                <button class="btn btn-secondary" onclick="checkCurrentOrder()">
+                    <i class="fas fa-bug"></i>
+                    Debug This Page
+                </button>
+            </div>
+            <div id="debugOutput" style="color: var(--text-secondary); font-family: monospace; font-size: 0.9rem;"></div>
+        </div>
+
+        <div id="orderContent">
+            <div class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading order details...</p>
+                <p style="font-size: 0.9rem; margin-top: 1rem;">If this takes too long, use the debug tools above.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>NexusBite</h3>
+                <p>The future of food is here. Experience culinary innovation with our curated selection of futuristic foods.</p>
+            </div>
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/categories">Categories</a></li>
+                    <li><a href="/cart">Cart</a></li>
+                    <li><a href="/orders">My Orders</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Shipping</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2023 NexusBite. All rights reserved. | The Future of Food Delivery</p>
+        </div>
+    </footer>
+
     <script>
         let currentOrder = null;
+
+        // Debug functions
+        function debugLog(message) {
+            console.log('[Order Debug]', message);
+            const debugOutput = document.getElementById('debugOutput');
+            if (debugOutput) {
+                debugOutput.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+                debugOutput.scrollTop = debugOutput.scrollHeight;
+            }
+        }
+
+        async function createTestOrder() {
+            debugLog('Creating test order...');
+            try {
+                const response = await fetch('/api/debug/create-test-order', { method: 'POST' });
+                const result = await response.json();
+                debugLog(`Test order created: ${result.message}`);
+                debugLog(`Order ID: ${result.order.id}`);
+                
+                // Reload the page to show the new order
+                setTimeout(() => {
+                    window.location.href = `/order/${result.order.id}`;
+                }, 1000);
+            } catch (error) {
+                debugLog(`Error creating test order: ${error.message}`);
+            }
+        }
+
+        async function checkAllOrders() {
+            debugLog('Checking all orders...');
+            try {
+                const response = await fetch('/api/debug/orders');
+                const data = await response.json();
+                debugLog(`Total orders: ${data.ordersCount}`);
+                if (data.orders.length > 0) {
+                    data.orders.forEach(order => {
+                        debugLog(`Order ${order.id}: ${order.orderNumber} (${order.status})`);
+                    });
+                } else {
+                    debugLog('No orders found in system');
+                }
+            } catch (error) {
+                debugLog(`Error checking orders: ${error.message}`);
+            }
+        }
+
+        function checkCurrentOrder() {
+            const pathParts = window.location.pathname.split('/');
+            const orderId = parseInt(pathParts[pathParts.length - 1]);
+            debugLog(`Current page order ID: ${orderId}`);
+            debugLog(`Current order data: ${JSON.stringify(currentOrder)}`);
+        }
 
         async function loadOrderDetail() {
             const pathParts = window.location.pathname.split('/');
             const orderId = parseInt(pathParts[pathParts.length - 1]);
             
-            console.log('Loading order ID:', orderId); // Debug log
+            debugLog(`Loading order ID: ${orderId}`);
             
             if (!orderId) {
                 showError('Invalid order ID');
@@ -13,19 +663,23 @@
             }
 
             try {
+                debugLog(`Fetching /api/orders/${orderId}`);
                 const response = await fetch(`/api/orders/${orderId}`);
-                console.log('API Response status:', response.status); // Debug log
+                
+                debugLog(`Response status: ${response.status}`);
                 
                 if (!response.ok) {
-                    throw new Error(`Order not found: ${response.status}`);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 currentOrder = await response.json();
-                console.log('Order data loaded:', currentOrder); // Debug log
+                debugLog(`Order data loaded successfully`);
+                debugLog(`Order structure: ${Object.keys(currentOrder).join(', ')}`);
+                
                 renderOrderDetail();
             } catch (error) {
-                console.error('Error loading order:', error);
-                showError('Order not found or failed to load: ' + error.message);
+                debugLog(`Error loading order: ${error.message}`);
+                showError(`Failed to load order: ${error.message}`);
             }
         }
 
@@ -37,19 +691,16 @@
                 return;
             }
 
-            // Check if order has the expected structure
-            if (!currentOrder.items || !currentOrder.customerInfo) {
-                console.error('Invalid order structure:', currentOrder);
-                showError('Order data is incomplete');
-                return;
-            }
-
-            const orderDate = new Date(currentOrder.createdAt);
-            const deliveryDate = new Date(currentOrder.estimatedDelivery);
+            // Safe data access with fallbacks
+            const orderDate = currentOrder.createdAt ? new Date(currentOrder.createdAt) : new Date();
+            const deliveryDate = currentOrder.estimatedDelivery ? new Date(currentOrder.estimatedDelivery) : new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+            const items = currentOrder.items || [];
+            const customerInfo = currentOrder.customerInfo || {};
+            const totalItems = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
             orderContent.innerHTML = `
                 <div class="order-header">
-                    <h1 class="order-title">Order #${currentOrder.orderNumber || currentOrder.id}</h1>
+                    <h1 class="order-title">Order #${currentOrder.orderNumber || currentOrder.id || 'N/A'}</h1>
                     <div class="order-meta">
                         <div class="meta-item">
                             <span class="meta-label">Order Date</span>
@@ -57,7 +708,7 @@
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Status</span>
-                            <span class="status-badge status-${currentOrder.status}">${currentOrder.status}</span>
+                            <span class="status-badge status-${currentOrder.status || 'confirmed'}">${currentOrder.status || 'confirmed'}</span>
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Estimated Delivery</span>
@@ -65,28 +716,28 @@
                         </div>
                         <div class="meta-item">
                             <span class="meta-label">Items</span>
-                            <span class="meta-value">${currentOrder.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                            <span class="meta-value">${totalItems}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="order-grid">
                     <div class="order-section">
-                        <h2 class="section-title">Order Items</h2>
+                        <h2 class="section-title">Order Items (${totalItems})</h2>
                         <div class="items-list">
-                            ${currentOrder.items.map(item => `
+                            ${items.length > 0 ? items.map(item => `
                                 <div class="order-item">
-                                    <div class="item-image" style="background-image: url('${item.productImage || item.image || '/placeholder-image.jpg'}')"></div>
+                                    <div class="item-image" style="background-image: url('${item.productImage || item.image || ''}')"></div>
                                     <div class="item-details">
-                                        <div class="item-name">${item.productName || item.name}</div>
+                                        <div class="item-name">${item.productName || item.name || 'Unknown Product'}</div>
                                         <div class="item-meta">
-                                            <span>Quantity: ${item.quantity}</span>
+                                            <span>Quantity: ${item.quantity || 0}</span>
                                             <span class="price">Price: $${(item.price || 0).toFixed(2)}</span>
-                                            <span class="price">Total: $${((item.price || 0) * item.quantity).toFixed(2)}</span>
+                                            <span class="price">Total: $${((item.price || 0) * (item.quantity || 0)).toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `).join('') : '<p>No items in this order</p>'}
                         </div>
                     </div>
 
@@ -95,15 +746,15 @@
                         <div class="customer-info">
                             <div class="info-group">
                                 <span class="info-label">Customer Name</span>
-                                <span class="info-value">${currentOrder.customerInfo.name || 'N/A'}</span>
+                                <span class="info-value">${customerInfo.name || 'Not provided'}</span>
                             </div>
                             <div class="info-group">
                                 <span class="info-label">Email</span>
-                                <span class="info-value">${currentOrder.customerInfo.email || 'N/A'}</span>
+                                <span class="info-value">${customerInfo.email || 'Not provided'}</span>
                             </div>
                             <div class="info-group">
                                 <span class="info-label">Delivery Address</span>
-                                <span class="info-value">${currentOrder.customerInfo.address || 'N/A'}</span>
+                                <span class="info-value">${customerInfo.address || 'Not provided'}</span>
                             </div>
                             <div class="info-group">
                                 <span class="info-label">Payment Method</span>
@@ -134,24 +785,6 @@
                         </div>
                     </div>
 
-                    <div class="order-section">
-                        <h2 class="section-title">Order Timeline</h2>
-                        <div class="timeline">
-                            <div class="timeline-item active">
-                                <div class="timeline-date">${orderDate.toLocaleDateString()}</div>
-                                <div class="timeline-content">Order Confirmed</div>
-                            </div>
-                            <div class="timeline-item ${currentOrder.status !== 'confirmed' ? 'active' : ''}">
-                                <div class="timeline-date">${new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
-                                <div class="timeline-content">Preparing Your Order</div>
-                            </div>
-                            <div class="timeline-item ${currentOrder.status === 'delivered' ? 'active' : ''}">
-                                <div class="timeline-date">${deliveryDate.toLocaleDateString()}</div>
-                                <div class="timeline-content">Out for Delivery</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="order-actions">
                         <button class="btn btn-primary" onclick="reorderItems()">
                             <i class="fas fa-redo"></i>
@@ -171,20 +804,20 @@
         }
 
         function reorderItems() {
-            if (!currentOrder) return;
+            if (!currentOrder || !currentOrder.items) return;
 
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
             currentOrder.items.forEach(item => {
                 const existingItem = cart.find(cartItem => cartItem.id === item.productId);
                 if (existingItem) {
-                    existingItem.quantity += item.quantity;
+                    existingItem.quantity += (item.quantity || 0);
                 } else {
                     cart.push({
                         id: item.productId,
                         name: item.productName || item.name,
                         price: item.price || 0,
                         image: item.productImage || item.image,
-                        quantity: item.quantity
+                        quantity: item.quantity || 1
                     });
                 }
             });
@@ -204,7 +837,14 @@
                     <i class="fas fa-exclamation-triangle"></i>
                     <h3>${message}</h3>
                     <p>Please check the order ID and try again.</p>
-                    <a href="/orders" class="btn btn-primary" style="margin-top: 1rem;">Back to Orders</a>
+                    <div class="debug-actions">
+                        <button class="btn btn-primary" onclick="createTestOrder()">
+                            Create Test Order
+                        </button>
+                        <a href="/orders" class="btn btn-secondary">
+                            Back to Orders
+                        </a>
+                    </div>
                 </div>
             `;
         }
@@ -218,24 +858,13 @@
             }
         }
 
-        // Debug function to check what's happening
-        function debugOrders() {
-            fetch('/api/orders')
-                .then(response => response.json())
-                .then(orders => {
-                    console.log('All orders from API:', orders);
-                    if (orders.length > 0) {
-                        console.log('First order details:', orders[0]);
-                    }
-                })
-                .catch(error => console.error('Debug error:', error));
-        }
-
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Order detail page loaded'); // Debug log
+            debugLog('Page loaded successfully');
             loadOrderDetail();
             updateCartCount();
-            debugOrders(); // Call debug to see what orders exist
+            checkAllOrders(); // Auto-check orders on load
         });
     </script>
+</body>
+</html>
