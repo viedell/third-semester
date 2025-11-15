@@ -1,0 +1,241 @@
+    <script>
+        let currentOrder = null;
+
+        async function loadOrderDetail() {
+            const pathParts = window.location.pathname.split('/');
+            const orderId = parseInt(pathParts[pathParts.length - 1]);
+            
+            console.log('Loading order ID:', orderId); // Debug log
+            
+            if (!orderId) {
+                showError('Invalid order ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}`);
+                console.log('API Response status:', response.status); // Debug log
+                
+                if (!response.ok) {
+                    throw new Error(`Order not found: ${response.status}`);
+                }
+                
+                currentOrder = await response.json();
+                console.log('Order data loaded:', currentOrder); // Debug log
+                renderOrderDetail();
+            } catch (error) {
+                console.error('Error loading order:', error);
+                showError('Order not found or failed to load: ' + error.message);
+            }
+        }
+
+        function renderOrderDetail() {
+            const orderContent = document.getElementById('orderContent');
+            
+            if (!currentOrder) {
+                showError('No order data available');
+                return;
+            }
+
+            // Check if order has the expected structure
+            if (!currentOrder.items || !currentOrder.customerInfo) {
+                console.error('Invalid order structure:', currentOrder);
+                showError('Order data is incomplete');
+                return;
+            }
+
+            const orderDate = new Date(currentOrder.createdAt);
+            const deliveryDate = new Date(currentOrder.estimatedDelivery);
+
+            orderContent.innerHTML = `
+                <div class="order-header">
+                    <h1 class="order-title">Order #${currentOrder.orderNumber || currentOrder.id}</h1>
+                    <div class="order-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Order Date</span>
+                            <span class="meta-value">${orderDate.toLocaleDateString()}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Status</span>
+                            <span class="status-badge status-${currentOrder.status}">${currentOrder.status}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Estimated Delivery</span>
+                            <span class="meta-value">${deliveryDate.toLocaleDateString()}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Items</span>
+                            <span class="meta-value">${currentOrder.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-grid">
+                    <div class="order-section">
+                        <h2 class="section-title">Order Items</h2>
+                        <div class="items-list">
+                            ${currentOrder.items.map(item => `
+                                <div class="order-item">
+                                    <div class="item-image" style="background-image: url('${item.productImage || item.image || '/placeholder-image.jpg'}')"></div>
+                                    <div class="item-details">
+                                        <div class="item-name">${item.productName || item.name}</div>
+                                        <div class="item-meta">
+                                            <span>Quantity: ${item.quantity}</span>
+                                            <span class="price">Price: $${(item.price || 0).toFixed(2)}</span>
+                                            <span class="price">Total: $${((item.price || 0) * item.quantity).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="order-section">
+                        <h2 class="section-title">Delivery Information</h2>
+                        <div class="customer-info">
+                            <div class="info-group">
+                                <span class="info-label">Customer Name</span>
+                                <span class="info-value">${currentOrder.customerInfo.name || 'N/A'}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="info-label">Email</span>
+                                <span class="info-value">${currentOrder.customerInfo.email || 'N/A'}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="info-label">Delivery Address</span>
+                                <span class="info-value">${currentOrder.customerInfo.address || 'N/A'}</span>
+                            </div>
+                            <div class="info-group">
+                                <span class="info-label">Payment Method</span>
+                                <span class="info-value">${(currentOrder.paymentMethod || 'credit_card').replace('_', ' ').toUpperCase()}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-section">
+                        <h2 class="section-title">Order Summary</h2>
+                        <div class="order-summary">
+                            <div class="summary-row">
+                                <span>Subtotal</span>
+                                <span>$${(currentOrder.total || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Shipping</span>
+                                <span>FREE</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax</span>
+                                <span>$${((currentOrder.total || 0) * 0.08).toFixed(2)}</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total</span>
+                                <span>$${((currentOrder.total || 0) * 1.08).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-section">
+                        <h2 class="section-title">Order Timeline</h2>
+                        <div class="timeline">
+                            <div class="timeline-item active">
+                                <div class="timeline-date">${orderDate.toLocaleDateString()}</div>
+                                <div class="timeline-content">Order Confirmed</div>
+                            </div>
+                            <div class="timeline-item ${currentOrder.status !== 'confirmed' ? 'active' : ''}">
+                                <div class="timeline-date">${new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toLocaleDateString()}</div>
+                                <div class="timeline-content">Preparing Your Order</div>
+                            </div>
+                            <div class="timeline-item ${currentOrder.status === 'delivered' ? 'active' : ''}">
+                                <div class="timeline-date">${deliveryDate.toLocaleDateString()}</div>
+                                <div class="timeline-content">Out for Delivery</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="order-actions">
+                        <button class="btn btn-primary" onclick="reorderItems()">
+                            <i class="fas fa-redo"></i>
+                            Reorder All Items
+                        </button>
+                        <button class="btn btn-secondary" onclick="printOrder()">
+                            <i class="fas fa-print"></i>
+                            Print Receipt
+                        </button>
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-shopping-bag"></i>
+                            Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function reorderItems() {
+            if (!currentOrder) return;
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            currentOrder.items.forEach(item => {
+                const existingItem = cart.find(cartItem => cartItem.id === item.productId);
+                if (existingItem) {
+                    existingItem.quantity += item.quantity;
+                } else {
+                    cart.push({
+                        id: item.productId,
+                        name: item.productName || item.name,
+                        price: item.price || 0,
+                        image: item.productImage || item.image,
+                        quantity: item.quantity
+                    });
+                }
+            });
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert('All items have been added to your cart!');
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        function showError(message) {
+            const orderContent = document.getElementById('orderContent');
+            orderContent.innerHTML = `
+                <div class="error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>${message}</h3>
+                    <p>Please check the order ID and try again.</p>
+                    <a href="/orders" class="btn btn-primary" style="margin-top: 1rem;">Back to Orders</a>
+                </div>
+            `;
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = totalCount;
+            }
+        }
+
+        // Debug function to check what's happening
+        function debugOrders() {
+            fetch('/api/orders')
+                .then(response => response.json())
+                .then(orders => {
+                    console.log('All orders from API:', orders);
+                    if (orders.length > 0) {
+                        console.log('First order details:', orders[0]);
+                    }
+                })
+                .catch(error => console.error('Debug error:', error));
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Order detail page loaded'); // Debug log
+            loadOrderDetail();
+            updateCartCount();
+            debugOrders(); // Call debug to see what orders exist
+        });
+    </script>
