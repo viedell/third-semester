@@ -1,0 +1,27 @@
+<!-- views/form.ejs -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Register User</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>Register New User</h1>
+    
+    <form action="/submit" method="POST">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" required>
+      </div>
+      <br>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required>
+      </div>
+      <br>
+      <button type="submit">Submit</button>
+    </form>
+    
+    <a href="/">Back to List</a>
+  </body>
+</html>
