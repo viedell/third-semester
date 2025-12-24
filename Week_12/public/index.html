@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SEA Weather Monitor</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e293b; padding: 2rem; border-radius: 12px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        select { width: 100%; padding: 12px; background: #334155; color: white; border: 1px solid #475569; border-radius: 6px; cursor: pointer; }
+        #output { margin-top: 20px; padding: 15px; border-radius: 8px; background: #0f172a; min-height: 80px; text-align: center; }
+        .error { color: #f87171; border: 1px solid #f87171; padding: 10px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>SEA Monitor</h2>
+        <select id="countrySelect">
+            <option value="">-- Select Market --</option>
+            <option value="ID">Indonesia</option>
+            <option value="MY">Malaysia</option>
+            <option value="SG">Singapore</option>
+            <option value="TH">Thailand</option>
+            <option value="VN">Vietnam</option>
+            <option value="PH">Philippines</option>
+        </select>
+        <div id="output">Ready...</div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
