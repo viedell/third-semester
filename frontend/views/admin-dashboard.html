@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DevInsights Admin Dashboard">
+  <title>Dashboard - DevInsights</title>
+  <link rel="stylesheet" href="/css/style.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0f172a;
+--surface:#111827;
+--card:#1e293b;
+--text:#e5e7eb;
+--muted:#9ca3af;
+--primary:#38bdf8;
+--accent:#22d3ee;
+--radius:14px
+}
+body{
+background:linear-gradient(180deg,#020617,#0f172a);
+color:var(--text);
+font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+line-height:1.6;
+min-height:100vh;
+animation:fadeIn 0.8s ease both
+}
+.container{max-width:1100px;margin:auto;padding:2rem}
+.card{
+background:linear-gradient(180deg,var(--card),var(--surface));
+border-radius:var(--radius);
+padding:1.75rem;
+box-shadow:0 20px 40px rgba(0,0,0,.35);
+border:1px solid rgba(255,255,255,.05);
+transition:transform .25s ease,box-shadow .25s ease;
+animation:slideUp .6s ease both
+}
+.card:hover{
+transform:translateY(-4px);
+box-shadow:0 30px 60px rgba(0,0,0,.45)
+}
+h1,h2,h3{letter-spacing:-.03em}
+p{color:var(--muted)}
+.button{
+display:inline-block;
+padding:.75rem 1.25rem;
+border-radius:999px;
+background:linear-gradient(135deg,var(--primary),var(--accent));
+color:#020617;
+font-weight:600;
+text-decoration:none;
+border:none;
+cursor:pointer;
+transition:transform .2s ease,box-shadow .2s ease
+}
+.button:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 30px rgba(56,189,248,.35)
+}
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:1rem 2rem;
+background:rgba(2,6,23,.75);
+backdrop-filter:blur(12px);
+border-bottom:1px solid rgba(255,255,255,.06);
+animation:slideDown .6s ease both
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:none}}
+</style>
+
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a href="index.html" class="logo">DevInsights</a>
+        <ul class="nav-links">
+          <!-- Populated by JavaScript -->
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="container dashboard">
+    <div class="dashboard-header">
+      <h1>Dashboard</h1>
+      <button onclick="showCreatePostForm()" class="btn btn-primary">
+        + Create New Post
+      </button>
+    </div>
+
+    <!-- Statistics -->
+    <div id="dashboardStats" class="dashboard-stats">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- Posts Table -->
+    <div>
+      <h2 style="margin-bottom: 1.5rem;">Your Posts</h2>
+      <div id="myPostsTable">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Create/Edit Post Modal -->
+  <div id="postModal" class="hidden" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  ">
+    <div style="
+      background: white;
+      border-radius: 0.5rem;
+      padding: 2rem;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    ">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 id="modalTitle">Create New Post</h2>
+        <button id="closeModal" class="btn btn-secondary btn-sm">Close</button>
+      </div>
+
+      <form id="postForm">
+        <div class="form-group">
+          <label for="postTitle">Title *</label>
+          <input 
+            type="text" 
+            id="postTitle" 
+            class="form-control" 
+            required 
+            placeholder="Enter post title"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="postExcerpt">Excerpt *</label>
+          <textarea 
+            id="postExcerpt" 
+            class="form-control" 
+            required 
+            placeholder="Brief summary of the post (20-300 characters)"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="postContent">Content *</label>
+          <textarea 
+            id="postContent" 
+            class="form-control" 
+            required 
+            placeholder="Write your post content here (minimum 100 characters)"
+            rows="12"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="postCoverImage">Cover Image URL</label>
+          <input 
+            type="url" 
+            id="postCoverImage" 
+            class="form-control" 
+            placeholder="https://example.com/image.jpg"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="postTags">Tags (comma-separated)</label>
+          <input 
+            type="text" 
+            id="postTags" 
+            class="form-control" 
+            placeholder="Node.js, React, Tutorial"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="postStatus">Status *</label>
+          <select id="postStatus" class="form-control" required>
+            <option value="DRAFT">Draft</option>
+            <option value="PUBLISHED">Published</option>
+            <option value="ARCHIVED">Archived</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Create Post
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>DevInsights</h3>
+          <p>A platform for developers to share knowledge and grow together.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 DevInsights. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../public/js/main.js"></script>
+  <script src="../public/js/admin.js"></script>
+</body>
+</html>

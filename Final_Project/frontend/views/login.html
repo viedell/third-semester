@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to DevInsights">
+  <title>Login - DevInsights</title>
+  <link rel="stylesheet" href="../public/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <nav>
+        <a href="index.html" class="logo">DevInsights</a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="blog-list.html">Blog</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="auth-container">
+    <h1>Welcome Back</h1>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          class="form-control" 
+          required 
+          placeholder="your.email@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          class="form-control" 
+          required 
+          placeholder="Enter your password"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Login
+      </button>
+    </form>
+
+    <p style="text-align: center; margin-top: 1.5rem; color: var(--gray);">
+      Don't have an account? 
+      <a href="register.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+        Register here
+      </a>
+    </p>
+
+    <div style="margin-top: 2rem; padding: 1rem; background: var(--gray-light); border-radius: 0.5rem;">
+      <p style="font-size: 0.875rem; margin-bottom: 0.5rem; font-weight: 600;">Test Accounts:</p>
+      <p style="font-size: 0.875rem; margin: 0; color: var(--gray);">
+        Admin: admin@devinsights.com / admin123<br>
+        Writer: writer@devinsights.com / writer123<br>
+        Reader: reader@devinsights.com / reader123
+      </p>
+    </div>
+  </div>
+
+  <script src="../public/js/main.js"></script>
+  <script src="../public/js/auth.js"></script>
+</body>
+</html>
